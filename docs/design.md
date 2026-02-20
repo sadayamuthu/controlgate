@@ -36,7 +36,7 @@ flowchart TB
     subgraph ControlGate["ControlGate Agent Skill"]
         Loader["Catalog Loader<br/>nist80053r5_full_catalog_enriched.json"]
         Router["Gate Router"]
-        
+
         subgraph Gates["Security Gate Scanners"]
             G1["🔑 Secrets Gate<br/>IA-5, SC-12, SC-28"]
             G2["🔒 Crypto Gate<br/>SC-8, SC-13, SC-17"]
@@ -47,7 +47,7 @@ flowchart TB
             G7["📋 Audit Gate<br/>AU-2, AU-3, AU-12"]
             G8["🔄 Change Gate<br/>CM-3, CM-4, CM-5"]
         end
-        
+
         Scorer["Severity Scorer"]
         Reporter["Compliance Reporter"]
     end
