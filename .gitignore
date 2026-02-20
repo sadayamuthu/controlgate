@@ -1,0 +1,38 @@
+# ─── Python ─────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ─── Virtual Environments ──────
+.venv/
+venv/
+env/
+
+# ─── Testing ───────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ─── Linting & Type Checking ──
+.mypy_cache/
+.ruff_cache/
+
+# ─── IDE ───────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── ControlGate ──────────────
+.controlgate/reports/
+src/controlgate/data/

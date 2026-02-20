@@ -1,0 +1,72 @@
+name: ControlGate Security Scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  controlgate:
+    name: 🛡️ ControlGate Compliance Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ControlGate
+        run: pip install .
+
+      - name: Run ControlGate scan
+        id: scan
+        run: |
+          controlgate scan \
+            --mode pr \
+            --target-branch ${{ github.base_ref || 'main' }} \
+            --format json markdown sarif \
+            --output-dir .controlgate/reports
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: .controlgate/reports/verdict.sarif
+        continue-on-error: true
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '.controlgate/reports/verdict.md';
+            if (fs.existsSync(reportPath)) {
+              const body = fs.readFileSync(reportPath, 'utf8');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Enforce gate
+        if: steps.scan.outcome == 'failure'
+        run: |
+          echo "🚫 ControlGate blocked this change due to security findings."
+          echo "Review the scan results above and fix the issues before merging."
+          exit 1

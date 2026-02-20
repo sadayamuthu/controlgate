@@ -1,0 +1,32 @@
+# ControlGate Configuration
+baseline: moderate              # Target NIST baseline (low | moderate | high)
+catalog: baseline/nist80053r5_full_catalog_enriched.json
+
+gates:
+  secrets:    { enabled: true,  action: block }
+  crypto:     { enabled: true,  action: block }
+  iam:        { enabled: true,  action: warn  }
+  sbom:       { enabled: true,  action: warn  }
+  iac:        { enabled: true,  action: block }
+  input:      { enabled: true,  action: block }
+  audit:      { enabled: true,  action: warn  }
+  change:     { enabled: true,  action: warn  }
+
+thresholds:
+  block_on:   [CRITICAL, HIGH]  # Block if finding severity matches
+  warn_on:    [MEDIUM]          # Warn for these severities
+  ignore:     [LOW]             # Skip LOW-severity findings
+
+exclusions:
+  paths:
+    - "tests/**"
+    - "docs/**"
+    - "*.md"
+  controls:
+    - AC-13     # Withdrawn controls
+    - AC-15
+
+reporting:
+  format: [json, markdown]
+  sarif: false
+  output_dir: .controlgate/reports

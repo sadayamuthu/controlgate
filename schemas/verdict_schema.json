@@ -1,0 +1,154 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ControlGate Verdict",
+    "description": "Schema for the ControlGate security compliance verdict output",
+    "type": "object",
+    "required": [
+        "verdict",
+        "timestamp",
+        "summary",
+        "baseline_target",
+        "findings",
+        "gate_summary"
+    ],
+    "properties": {
+        "verdict": {
+            "type": "string",
+            "enum": [
+                "BLOCK",
+                "WARN",
+                "PASS"
+            ],
+            "description": "Overall scan verdict"
+        },
+        "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the scan"
+        },
+        "summary": {
+            "type": "string",
+            "description": "Human-readable summary of findings"
+        },
+        "baseline_target": {
+            "type": "string",
+            "enum": [
+                "low",
+                "moderate",
+                "high"
+            ],
+            "description": "Target NIST baseline level"
+        },
+        "findings": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Finding"
+            }
+        },
+        "gate_summary": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/$defs/GateSummary"
+            }
+        }
+    },
+    "$defs": {
+        "Finding": {
+            "type": "object",
+            "required": [
+                "gate",
+                "control_id",
+                "control_name",
+                "severity",
+                "non_negotiable",
+                "file",
+                "line",
+                "description",
+                "evidence",
+                "remediation",
+                "action"
+            ],
+            "properties": {
+                "gate": {
+                    "type": "string",
+                    "description": "Gate that produced this finding"
+                },
+                "control_id": {
+                    "type": "string",
+                    "description": "NIST 800-53 control ID (e.g., IA-5)"
+                },
+                "control_name": {
+                    "type": "string",
+                    "description": "Human-readable control name"
+                },
+                "severity": {
+                    "type": "string",
+                    "enum": [
+                        "CRITICAL",
+                        "HIGH",
+                        "MEDIUM",
+                        "LOW"
+                    ],
+                    "description": "Finding severity from catalog"
+                },
+                "non_negotiable": {
+                    "type": "boolean",
+                    "description": "Whether this control is non-negotiable at the target baseline"
+                },
+                "file": {
+                    "type": "string",
+                    "description": "File path where the finding was detected"
+                },
+                "line": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Line number of the finding"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the security issue"
+                },
+                "evidence": {
+                    "type": "string",
+                    "description": "Code evidence that triggered the finding"
+                },
+                "remediation": {
+                    "type": "string",
+                    "description": "Recommended fix for the issue"
+                },
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "BLOCK",
+                        "WARN",
+                        "PASS"
+                    ],
+                    "description": "Action level for this finding"
+                }
+            }
+        },
+        "GateSummary": {
+            "type": "object",
+            "required": [
+                "status",
+                "findings"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "BLOCK",
+                        "WARN",
+                        "PASS"
+                    ],
+                    "description": "Worst finding action in this gate"
+                },
+                "findings": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of findings from this gate"
+                }
+            }
+        }
+    }
+}
