@@ -59,7 +59,7 @@ def download_catalog(target_dir: Path | None = None) -> Path:
         print(f"📥 Downloading catalog from {CATALOG_URL}...", file=sys.stderr)
         req = urllib.request.Request(
             CATALOG_URL,
-            headers={"User-Agent": "ControlGate/0.1.0"},
+            headers={"User-Agent": "ControlGate/0.1.1"},
         )
         with urllib.request.urlopen(req, timeout=30) as response:
             data = response.read()

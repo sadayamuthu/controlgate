@@ -1,3 +1,3 @@
-"""ControlGate — NIST RMF Cloud Security Hardening Compliance Gate."""
+"""ControlGate - NIST RMF Cloud Security Hardening Agent."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

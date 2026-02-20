@@ -87,8 +87,8 @@ class SARIFReporter:
                     "tool": {
                         "driver": {
                             "name": "ControlGate",
-                            "version": "0.1.0",
-                            "informationUri": "https://github.com/controlgate",
+                            "version": "0.1.1",
+                            "informationUri": "https://github.com/sadayamuthu/controlgate",
                             "rules": rules,
                         }
                     },
