@@ -67,8 +67,12 @@ class TestCatalogPathResolution:
 
         config = ControlGateConfig()
         actual_path = _gcp()
+        
+        # Use a dynamic project root based on this test file's location
+        project_root = Path(__file__).parent.parent.resolve()
+        
         # Use a relative path from project root
-        config.catalog_path = str(actual_path.relative_to(Path("/Users/karthik/git/controlgate")))
+        config.catalog_path = str(actual_path.relative_to(project_root))
         with (
             patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")),
             patch("controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError),
@@ -80,7 +84,7 @@ class TestCatalogPathResolution:
                 try:
                     os.chdir(tmpdir)
                     with patch("controlgate.__main__.subprocess.run") as mock_run:
-                        mock_run.return_value = MagicMock(stdout="/Users/karthik/git/controlgate\n")
+                        mock_run.return_value = MagicMock(stdout=f"{project_root}\n")
                         path = _resolve_catalog_path(config)
                         assert path.exists()
                 finally:
