@@ -10,6 +10,7 @@ install: ## Install ControlGate
 
 install-dev: ## Install with dev dependencies
 	python3 -m pip install -e ".[dev]"
+	pre-commit install
 
 # ─── Testing ────────────────────────────────────────────
 test: ## Run tests
