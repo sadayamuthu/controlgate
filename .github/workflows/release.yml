@@ -59,7 +59,7 @@ jobs:
           TAG_NAME="v$VERSION"
           gh release create "$TAG_NAME" \
             --title "Release $TAG_NAME" \
-            --generate-notes \
+            --notes-file CHANGELOG.md \
             --target main
 
       - name: Build Package
