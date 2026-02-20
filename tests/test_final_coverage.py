@@ -67,10 +67,10 @@ class TestCatalogPathResolution:
 
         config = ControlGateConfig()
         actual_path = _gcp()
-        
+
         # Use a dynamic project root based on this test file's location
         project_root = Path(__file__).parent.parent.resolve()
-        
+
         # Use a relative path from project root
         config.catalog_path = str(actual_path.relative_to(project_root))
         with (
