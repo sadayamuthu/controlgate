@@ -117,18 +117,22 @@ class TestResolveCatalogPath:
     def test_finds_absolute_path(self):
         config = ControlGateConfig()
         config.catalog_path = str(get_catalog_path())
-        with patch("controlgate.catalog_downloader.get_catalog_path", side_effect=ConnectionError), patch(
-            "controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError
+        with (
+            patch("controlgate.catalog_downloader.get_catalog_path", side_effect=ConnectionError),
+            patch("controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError),
         ):
-                path = _resolve_catalog_path(config)
-                assert path.exists()
+            path = _resolve_catalog_path(config)
+            assert path.exists()
 
     def test_exits_when_not_found(self):
         config = ControlGateConfig()
         config.catalog_path = "/nonexistent/catalog.json"
-        with patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")), patch(
-            "controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError
-        ), patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError), pytest.raises(SystemExit):
+        with (
+            patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")),
+            patch("controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError),
+            patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError),
+            pytest.raises(SystemExit),
+        ):
             _resolve_catalog_path(config)
 
 
@@ -310,11 +314,12 @@ class TestCatalogInfoCommand:
         assert exit_code == 0
 
     def test_catalog_info_no_catalog(self):
-        with patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")), patch(
-            "controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError
+        with (
+            patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")),
+            patch("controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError),
         ):
-                exit_code = catalog_info_command()
-                assert exit_code == 1
+            exit_code = catalog_info_command()
+            assert exit_code == 1
 
 
 class TestMain:

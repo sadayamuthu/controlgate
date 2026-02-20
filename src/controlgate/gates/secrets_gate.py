@@ -187,17 +187,19 @@ class SecretsGate(BaseGate):
             token = match.group(1)
             if len(token) >= _MIN_LENGTH_FOR_ENTROPY:
                 entropy = _shannon_entropy(token)
-                if entropy >= _ENTROPY_THRESHOLD and not any(f.line == line_no and f.gate == self.gate_id for f in findings):
+                if entropy >= _ENTROPY_THRESHOLD and not any(
+                    f.line == line_no and f.gate == self.gate_id for f in findings
+                ):
                     # Avoid duplicate if already caught by pattern
                     findings.append(
                         self._make_finding(
-                                control_id="IA-5",
-                                file=file_path,
-                                line=line_no,
-                                description=f"High-entropy string detected (entropy={entropy:.2f})",
-                                evidence=line.strip()[:120],
-                                remediation="Verify this is not a secret. If so, move to environment variable or secrets manager",
-                            )
+                            control_id="IA-5",
+                            file=file_path,
+                            line=line_no,
+                            description=f"High-entropy string detected (entropy={entropy:.2f})",
+                            evidence=line.strip()[:120],
+                            remediation="Verify this is not a secret. If so, move to environment variable or secrets manager",
                         )
+                    )
 
         return findings

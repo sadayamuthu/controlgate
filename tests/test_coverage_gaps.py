@@ -1,6 +1,5 @@
 """Tests for remaining uncovered paths across gates, engine, config, and diff parser."""
 
-
 from controlgate.config import ControlGateConfig
 from controlgate.diff_parser import parse_diff
 from controlgate.engine import ControlGateEngine

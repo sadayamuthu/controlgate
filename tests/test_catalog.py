@@ -1,6 +1,5 @@
 """Tests for the NIST catalog loader and CatalogIndex."""
 
-
 import pytest
 
 from controlgate.catalog import GATE_CONTROL_MAP, CatalogIndex

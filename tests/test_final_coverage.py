@@ -24,11 +24,12 @@ class TestCatalogPathResolution:
         config = ControlGateConfig()
         actual_path = _gcp()
         config.catalog_path = str(actual_path)
-        with patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")), patch(
-            "controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError
+        with (
+            patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")),
+            patch("controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError),
         ):
-                path = _resolve_catalog_path(config)
-                assert path.exists()
+            path = _resolve_catalog_path(config)
+            assert path.exists()
 
     def test_relative_path_exists(self):
         """__main__.py line 77-78: relative catalog path from cwd."""
@@ -47,11 +48,12 @@ class TestCatalogPathResolution:
             orig_dir = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                with patch(
-                    "controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")
-                ), patch(
-                    "controlgate.catalog_downloader.download_catalog",
-                    side_effect=ConnectionError,
+                with (
+                    patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")),
+                    patch(
+                        "controlgate.catalog_downloader.download_catalog",
+                        side_effect=ConnectionError,
+                    ),
                 ):
                     path = _resolve_catalog_path(config)
                     assert path.exists()
@@ -67,23 +69,22 @@ class TestCatalogPathResolution:
         actual_path = _gcp()
         # Use a relative path from project root
         config.catalog_path = str(actual_path.relative_to(Path("/Users/karthik/git/controlgate")))
-        with patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")), patch(
-            "controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError
+        with (
+            patch("controlgate.catalog_downloader._PACKAGE_DATA_DIR", Path("/nonexistent")),
+            patch("controlgate.catalog_downloader.download_catalog", side_effect=ConnectionError),
         ):
-                import os
+            import os
 
-                orig_dir = os.getcwd()
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    try:
-                        os.chdir(tmpdir)
-                        with patch("controlgate.__main__.subprocess.run") as mock_run:
-                            mock_run.return_value = MagicMock(
-                                stdout="/Users/karthik/git/controlgate\n"
-                            )
-                            path = _resolve_catalog_path(config)
-                            assert path.exists()
-                    finally:
-                        os.chdir(orig_dir)
+            orig_dir = os.getcwd()
+            with tempfile.TemporaryDirectory() as tmpdir:
+                try:
+                    os.chdir(tmpdir)
+                    with patch("controlgate.__main__.subprocess.run") as mock_run:
+                        mock_run.return_value = MagicMock(stdout="/Users/karthik/git/controlgate\n")
+                        path = _resolve_catalog_path(config)
+                        assert path.exists()
+                finally:
+                    os.chdir(orig_dir)
 
 
 # ─── diff_parser.py: no-newline marker and other edge lines ──
