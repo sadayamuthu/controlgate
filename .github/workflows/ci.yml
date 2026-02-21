@@ -2,11 +2,45 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
+  version-check:
+    name: 🔖 Check Version Bump
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Version Bump in pyproject.toml
+        run: |
+          # Get the base branch we are merging into
+          BASE_BRANCH=${{ github.base_ref }}
+
+          # Fetch the base branch
+          git fetch origin $BASE_BRANCH
+
+          # Extract version from current branch
+          CURRENT_VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
+
+          # Extract version from base branch
+          BASE_VERSION=$(git show origin/$BASE_BRANCH:pyproject.toml | grep '^version =' | cut -d '"' -f 2)
+
+          echo "Current Version: $CURRENT_VERSION"
+          echo "Base Version: $BASE_VERSION"
+
+          if [ "$CURRENT_VERSION" = "$BASE_VERSION" ]; then
+            echo "::error::Version in pyproject.toml ($CURRENT_VERSION) has not been bumped."
+            echo "::error::Please increment the version number before merging to $BASE_BRANCH."
+            exit 1
+          else
+            echo "Version correctly bumped to $CURRENT_VERSION"
+          fi
+
   quality:
     name: 🔍 Code Quality
     runs-on: ubuntu-latest
@@ -45,31 +79,77 @@ jobs:
           file: coverage.xml
         continue-on-error: true
 
-  publish:
-    name: 📦 Publish to PyPI
+  release:
+    name: 🚀 Release and Publish
     needs: quality
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
-      id-token: write  # Trusted publishing
+      contents: write # Required for creating a GitHub release
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history so tags can be checked
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
+          cache: "pip"
 
-      - name: Install build tools
-        run: pip install build .
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install-dev
 
-      - name: Fetch latest NIST catalog
-        run: controlgate update-catalog
+      - name: Extract Project Version
+        id: version
+        run: |
+          VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build package
+      - name: Check if Release Exists
+        id: check_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG_NAME="v$VERSION"
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists. Skipping."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Release $TAG_NAME does not exist. Proceeding."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install Build Tools and Package
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          python -m pip install build twine .
+          controlgate update-catalog
+
+      - name: Build Package
+        if: steps.check_release.outputs.exists == 'false'
         run: python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        if: steps.check_release.outputs.exists == 'false'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: python -m twine upload dist/*
+
+      - name: Create GitHub Release and Tag
+        if: steps.check_release.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          TAG_NAME="v$VERSION"
+          gh release create "$TAG_NAME" \
+            --title "Release $TAG_NAME" \
+            --notes-file CHANGELOG.md \
+            --target main

@@ -7,8 +7,8 @@ from controlgate.catalog import GATE_CONTROL_MAP, CatalogIndex
 
 class TestCatalogLoading:
     def test_loads_controls(self, catalog):
-        """Catalog should load all 1189 controls."""
-        assert catalog.count == 1189
+        """Catalog should load all 1196 controls."""
+        assert catalog.count == 1196
 
     def test_raises_on_missing_file(self):
         with pytest.raises(FileNotFoundError):
@@ -80,9 +80,13 @@ class TestCatalogRelatedTo:
         assert "IA-1" in related_ids
 
     def test_no_related_controls(self, catalog):
-        # Withdrawn controls with [None]
-        related = catalog.related_to("AC-11(1)")
+        # Withdrawn controls used to have [None], we explicitly mock one to test the parsing line
+        ctrl = catalog.by_id("AC-1")
+        original_related = ctrl.related_controls
+        ctrl.related_controls = "[None]"
+        related = catalog.related_to("AC-1")
         assert related == []
+        ctrl.related_controls = original_related
 
     def test_nonexistent_control(self, catalog):
         assert catalog.related_to("ZZ-999") == []

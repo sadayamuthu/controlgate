@@ -95,7 +95,7 @@ class TestCatalogInfo:
     def test_returns_metadata(self):
         info = catalog_info(get_catalog_path())
         assert info["project"] == "NIST Cloud Security Baseline (NCSB)"
-        assert info["control_count"] == 1189
+        assert info["control_count"] == 1196
         assert "version" in info
         assert "framework" in info
         assert "generated_at" in info

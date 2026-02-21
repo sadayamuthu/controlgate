@@ -141,6 +141,17 @@ make check          # Run all checks (lint + typecheck + test)
 make build          # Build distribution packages
 ```
 
+## AI Agent Skills
+
+ControlGate provides native skills for popular AI coding assistants. These skills teach the agents how to proactively scan your code for NIST 800-53 R5 compliance and automatically apply remediations.
+
+The agent prompts and workflows are located in the [`skills/`](skills/) directory and are published to their respective marketplaces/repositories:
+
+- **Antigravity**: Full workflow definitions available in `skills/antigravity/controlgate/`
+- **Cursor**: Repository rules available in `skills/cursor/.cursorrules`
+- **Claude Code**: System prompt instructions in `skills/claude_code/.clauderules`
+- **CodeEx**: Integration prompts in `skills/codeex/instructions.md`
+
 ## Data Source
 
 Powered by the [NIST Cloud Security Baseline (NCSB)](https://github.com/sadayamuthu/nist-cloud-security-baseline) enriched catalog:
