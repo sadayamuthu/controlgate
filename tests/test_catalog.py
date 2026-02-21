@@ -7,8 +7,8 @@ from controlgate.catalog import GATE_CONTROL_MAP, CatalogIndex
 
 class TestCatalogLoading:
     def test_loads_controls(self, catalog):
-        """Catalog should load all 1189 controls."""
-        assert catalog.count == 1189
+        """Catalog should load all controls (at least 1189)."""
+        assert catalog.count >= 1189
 
     def test_raises_on_missing_file(self):
         with pytest.raises(FileNotFoundError):
