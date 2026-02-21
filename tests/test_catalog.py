@@ -80,9 +80,13 @@ class TestCatalogRelatedTo:
         assert "IA-1" in related_ids
 
     def test_no_related_controls(self, catalog):
-        # Withdrawn controls with [None]
-        related = catalog.related_to("AC-11(1)")
+        # Withdrawn controls used to have [None], we explicitly mock one to test the parsing line
+        ctrl = catalog.by_id("AC-1")
+        original_related = ctrl.related_controls
+        ctrl.related_controls = "[None]"
+        related = catalog.related_to("AC-1")
         assert related == []
+        ctrl.related_controls = original_related
 
     def test_nonexistent_control(self, catalog):
         assert catalog.related_to("ZZ-999") == []
