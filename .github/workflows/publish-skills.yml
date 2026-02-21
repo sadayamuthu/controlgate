@@ -1,0 +1,42 @@
+name: Publish AI Agent Skills
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'skills/**'
+  workflow_dispatch:
+
+jobs:
+  publish-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publish Antigravity Skill
+        # Replace this placeholder with the actual action/script to publish to the Antigravity Registry
+        run: |
+          echo "Publishing Antigravity skill from skills/antigravity/controlgate ..."
+          # e.g., gh release create or copying to a centralized registry repo
+
+      - name: Publish Cursor Rules
+        # Replace this placeholder with how Cursor rules are shared (e.g., uploading to a gist or a community repo)
+        run: |
+          echo "Publishing Cursor rules from skills/cursor/.cursorrules ..."
+
+      - name: Publish Claude Code Rules
+        # Replace this placeholder with how Claude Code rules are shared
+        run: |
+          echo "Publishing Claude Code rules from skills/claude_code/.clauderules ..."
+
+      - name: Publish CodeEx Instructions
+        # Replace this placeholder with how CodeEx instructions are shared
+        run: |
+          echo "Publishing CodeEx instructions from skills/codeex/instructions.md ..."
