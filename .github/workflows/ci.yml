@@ -7,6 +7,40 @@ on:
     branches: [main, develop]
 
 jobs:
+  version-check:
+    name: 🔖 Check Version Bump
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Version Bump in pyproject.toml
+        run: |
+          # Get the base branch we are merging into
+          BASE_BRANCH=${{ github.base_ref }}
+
+          # Fetch the base branch
+          git fetch origin $BASE_BRANCH
+
+          # Extract version from current branch
+          CURRENT_VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
+
+          # Extract version from base branch
+          BASE_VERSION=$(git show origin/$BASE_BRANCH:pyproject.toml | grep '^version =' | cut -d '"' -f 2)
+
+          echo "Current Version: $CURRENT_VERSION"
+          echo "Base Version: $BASE_VERSION"
+
+          if [ "$CURRENT_VERSION" = "$BASE_VERSION" ]; then
+            echo "::error::Version in pyproject.toml ($CURRENT_VERSION) has not been bumped."
+            echo "::error::Please increment the version number before merging to $BASE_BRANCH."
+            exit 1
+          else
+            echo "Version correctly bumped to $CURRENT_VERSION"
+          fi
+
   quality:
     name: 🔍 Code Quality
     runs-on: ubuntu-latest
