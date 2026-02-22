@@ -107,10 +107,23 @@ jobs:
       - name: Run Test Suite
         run: |
           cd controlgate-test-suite
+          echo "Setting up isolated test repositories..."
+
+          for d in cg-test-*; do
+            if [ -d "$d" ]; then
+              cd "$d"
+              git init
+              git config user.name "CI"
+              git config user.email "ci@example.com"
+              git add .
+              cd ..
+            fi
+          done
+
           echo "Running tests..."
           # The test projects contain intentional vulnerabilities.
-          # We expect test_runner.py to fail (return 1) as it correctly blocks them.
-          if python test_runner.py --mode full; then
+          # We expect test_runner.py (running in pre-commit mode) to fail (return 1) as it correctly blocks them.
+          if python test_runner.py --mode pre-commit; then
             echo "::error::ControlGate failed to block intentionally vulnerable test projects."
             exit 1
           else
