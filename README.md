@@ -152,6 +152,11 @@ The agent prompts and workflows are located in the [`skills/`](skills/) director
 - **Claude Code**: System prompt instructions in `skills/claude_code/.clauderules`
 - **CodeEx**: Integration prompts in `skills/codeex/instructions.md`
 
+## Test Suite
+
+To validate the capabilities of ControlGate, we maintain a standalone test suite at [sadayamuthu/controlgate-test-suite](https://github.com/sadayamuthu/controlgate-test-suite).
+This suite contains intentionally vulnerable projects spanning multiple languages and frameworks, specifically designed to trigger each of the 8 Security Gates. It is automatically executed in the CI pipeline to ensure zero regression in detection capabilities.
+
 ## Data Source
 
 Powered by the [NIST Cloud Security Baseline (NCSB)](https://github.com/sadayamuthu/nist-cloud-security-baseline) enriched catalog:

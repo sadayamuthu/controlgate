@@ -79,9 +79,61 @@ jobs:
           file: coverage.xml
         continue-on-error: true
 
+  integration-tests:
+    name: 🧪 Integration Tests (Test Suite)
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ControlGate
+        uses: actions/checkout@v4
+        with:
+          path: controlgate
+
+      - name: Checkout Test Suite
+        uses: actions/checkout@v4
+        with:
+          repository: sadayamuthu/controlgate-test-suite
+          path: controlgate-test-suite
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ControlGate
+        run: pip install -e ./controlgate
+
+      - name: Run Test Suite
+        run: |
+          cd controlgate-test-suite
+          echo "Setting up isolated test repositories..."
+
+          for d in cg-test-*; do
+            if [ -d "$d" ]; then
+              cd "$d"
+              git init
+              git config user.name "CI"
+              git config user.email "ci@example.com"
+              git add .
+              cd ..
+            fi
+          done
+
+          echo "Running tests..."
+          # The test projects contain intentional vulnerabilities.
+          # We expect test_runner.py (running in pre-commit mode) to fail (return 1) as it correctly blocks them.
+          if python test_runner.py --mode pre-commit; then
+            echo "::error::ControlGate failed to block intentionally vulnerable test projects."
+            exit 1
+          else
+            echo "ControlGate successfully blocked the test projects as expected."
+            exit 0
+          fi
+
   release:
     name: 🚀 Release and Publish
-    needs: quality
+    needs: [quality, integration-tests]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
