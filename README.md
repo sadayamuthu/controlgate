@@ -4,9 +4,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**NIST RMF Cloud Security Hardening — Pre-Commit & Pre-Merge Compliance Gate**
+**NIST RMF & FedRAMP Cloud Security Hardening — Pre-Commit & Pre-Merge Compliance Gate**
 
-ControlGate is an AI-powered agent skill that scans your code changes against the **NIST SP 800-53 Rev. 5** security framework before every commit and merge. It maps findings directly to specific NIST control IDs, providing traceable compliance evidence and actionable remediation guidance.
+ControlGate is an AI-powered agent skill that scans your code changes against the **NIST SP 800-53 Rev. 5** (and **FedRAMP**) security framework before every commit and merge. It maps findings directly to specific NIST control IDs, providing traceable compliance evidence and actionable remediation guidance.
 
 ## Quick Start
 
@@ -14,8 +14,11 @@ ControlGate is an AI-powered agent skill that scans your code changes against th
 # Install
 pip install controlgate
 
-# Scan staged changes
+# Scan staged changes (NIST baseline)
 controlgate scan --mode pre-commit --format markdown
+
+# Scan staged changes (FedRAMP baseline)
+controlgate scan --gov --baseline moderate --mode pre-commit --format markdown
 
 # Scan PR diff against main
 controlgate scan --mode pr --target-branch main --format json markdown
@@ -50,14 +53,13 @@ Verdict: BLOCK 🚫 / WARN ⚠️ / PASS ✅
 
 ## Installation
 
-### From Source
+### From PyPI
 
 ```bash
-git clone https://github.com/YOUR_ORG/controlgate.git
-cd controlgate
-python3 -m venv .venv && source .venv/bin/activate
-make install-dev
+pip install controlgate
 ```
+
+[View ControlGate on PyPI](https://pypi.org/project/controlgate/)
 
 ### As a Pre-Commit Hook
 
@@ -68,6 +70,7 @@ repos:
     hooks:
       - id: controlgate
         name: ControlGate Security Scan
+        # For FedRAMP baselines, add `--gov --baseline moderate` to the entry command
         entry: python -m controlgate scan --mode pre-commit --format markdown
         language: python
         always_run: true
@@ -82,7 +85,8 @@ Copy [`hooks/github_action.yml`](hooks/github_action.yml) to `.github/workflows/
 Create a `.controlgate.yml` in your project root:
 
 ```yaml
-baseline: moderate              # low | moderate | high
+baseline: moderate              # low | moderate | high | privacy | li-saas
+gov: false                      # set to true to evaluate against FedRAMP baselines
 catalog: baseline/nist80053r5_full_catalog_enriched.json
 
 gates:
@@ -110,11 +114,20 @@ exclusions:
 # Scan staged changes (pre-commit mode)
 controlgate scan --mode pre-commit --format markdown
 
+# Scan explicitly against FedRAMP baselines (pre-commit mode)
+controlgate scan --gov --baseline moderate --mode pre-commit --format markdown
+
 # Scan PR diff
 controlgate scan --mode pr --target-branch main --format json markdown sarif
 
+# Scan PR diff explicitly against FedRAMP baselines
+controlgate scan --gov --baseline high --mode pr --target-branch main --format json markdown sarif
+
 # Scan a saved diff file
 controlgate scan --diff-file path/to/diff --format json
+
+# Scan a saved diff file against FedRAMP baselines
+controlgate scan --gov --baseline li-saas --diff-file path/to/diff --format json
 
 # Output reports to directory
 controlgate scan --output-dir .controlgate/reports --format json markdown sarif

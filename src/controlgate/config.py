@@ -10,6 +10,7 @@ import yaml  # type: ignore
 
 _DEFAULT_CONFIG = {
     "baseline": "moderate",
+    "gov": False,
     "catalog": "baseline/nist80053r5_full_catalog_enriched.json",
     "gates": {
         "secrets": {"enabled": True, "action": "block"},
@@ -51,6 +52,7 @@ class ControlGateConfig:
     """Full ControlGate configuration loaded from `.controlgate.yml`."""
 
     baseline: str = "moderate"
+    is_gov: bool = False
     catalog_path: str = "baseline/nist80053r5_full_catalog_enriched.json"
     gates: dict[str, GateConfig] = field(default_factory=dict)
     block_on: list[str] = field(default_factory=lambda: ["CRITICAL", "HIGH"])
@@ -93,6 +95,7 @@ class ControlGateConfig:
         """Build config from a raw dict (merged defaults + user overrides)."""
         cfg = cls()
         cfg.baseline = raw.get("baseline", cfg.baseline)
+        cfg.is_gov = raw.get("gov", cfg.is_gov)
         cfg.catalog_path = raw.get("catalog", cfg.catalog_path)
 
         # Gates

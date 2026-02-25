@@ -104,6 +104,8 @@ def scan_command(args: argparse.Namespace) -> int:
     config = ControlGateConfig.load(args.config)
     if args.baseline:
         config.baseline = args.baseline
+    if args.gov:
+        config.is_gov = True
 
     # Resolve and load catalog
     catalog_path = _resolve_catalog_path(config)
@@ -197,9 +199,14 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.add_argument(
         "--baseline",
         type=str,
-        choices=["low", "moderate", "high"],
+        choices=["low", "moderate", "high", "privacy", "li-saas"],
         default=None,
-        help="Target NIST baseline level",
+        help="Target NIST/FedRAMP baseline level",
+    )
+    scan_parser.add_argument(
+        "--gov",
+        action="store_true",
+        help="Evaluate against FedRAMP baselines instead of standard NIST",
     )
     scan_parser.add_argument(
         "--mode",

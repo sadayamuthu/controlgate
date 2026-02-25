@@ -35,6 +35,7 @@ class Control:
     related_controls: str
     parent_control_id: str | None
     baseline_membership: dict[str, bool]
+    fedramp_membership: dict[str, bool]
     severity: str
     non_negotiable: bool
 
@@ -49,6 +50,7 @@ class Control:
             related_controls=data.get("related_controls", ""),
             parent_control_id=data.get("parent_control_id"),
             baseline_membership=data.get("baseline_membership", {}),
+            fedramp_membership=data.get("fedramp_membership", {}),
             severity=data.get("severity", "LOW"),
             non_negotiable=data.get("non_negotiable", False),
         )
@@ -141,6 +143,7 @@ class Verdict:
     timestamp: str
     summary: str
     baseline_target: str
+    is_gov: bool = False
     findings: list[Finding] = field(default_factory=list)
     gate_summary: dict[str, GateSummary] = field(default_factory=dict)
 
@@ -150,6 +153,7 @@ class Verdict:
             "timestamp": self.timestamp,
             "summary": self.summary,
             "baseline_target": self.baseline_target,
+            "is_gov": self.is_gov,
             "findings": [f.to_dict() for f in self.findings],
             "gate_summary": {k: v.to_dict() for k, v in self.gate_summary.items()},
         }
