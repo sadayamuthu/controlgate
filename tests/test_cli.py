@@ -274,6 +274,25 @@ new file mode 100644
             exit_code = scan_command(args)
             assert exit_code == 1
 
+    def test_scan_with_gov_flag(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".diff", delete=False) as f:
+            f.write(_SAMPLE_DIFF)
+            f.flush()
+            parser = build_parser()
+            args = parser.parse_args(
+                [
+                    "scan",
+                    "--diff-file",
+                    f.name,
+                    "--format",
+                    "json",
+                    "--gov",
+                ]
+            )
+            # Just asserting it doesn't crash and returns 1 because of findings
+            exit_code = scan_command(args)
+            assert exit_code == 1
+
     def test_scan_uses_git_diff_when_no_file(self):
         """When no --diff-file is given, it uses git diff."""
         parser = build_parser()

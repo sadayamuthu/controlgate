@@ -8,6 +8,7 @@
         "timestamp",
         "summary",
         "baseline_target",
+        "is_gov",
         "findings",
         "gate_summary"
     ],
@@ -35,9 +36,15 @@
             "enum": [
                 "low",
                 "moderate",
-                "high"
+                "high",
+                "privacy",
+                "li-saas"
             ],
             "description": "Target NIST baseline level"
+        },
+        "is_gov": {
+            "type": "boolean",
+            "description": "True if evaluated against FedRAMP (gov) baselines instead of standard NIST"
         },
         "findings": {
             "type": "array",

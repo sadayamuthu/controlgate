@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **FedRAMP Support**: ControlGate can now evaluate code changes against FedRAMP baselines (LI-SaaS, Low, Moderate, High) via the `--gov` CLI flag or `gov: true` in `.controlgate.yml`. This integrates directly with the enriched `fedramp_membership` catalog data.
+
 ## [0.1.3] - 2026-02-20
 
 ### Added

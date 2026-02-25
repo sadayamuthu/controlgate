@@ -100,3 +100,61 @@ class TestEngine:
         diff_files = parse_diff(_CLEAN_DIFF)
         verdict = engine.scan(diff_files)
         assert verdict.baseline_target == "moderate"
+
+    def test_scan_ignores_low_severity(self, engine):
+        # By default, LOW finding severities are ignored
+        diff_files = parse_diff(_SECRETS_DIFF)
+        engine.config.ignore = ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+        verdict = engine.scan(diff_files)
+        assert len(verdict.findings) == 0
+
+    def test_scan_handles_missing_control(self, engine):
+        # Test case where catalog lookup returns None
+        diff_files = parse_diff(_SECRETS_DIFF)
+        engine.catalog.by_id = lambda _: None
+        verdict = engine.scan(diff_files)
+        assert len(verdict.findings) == 0
+
+    def test_scan_gov_baseline_respected(self, engine):
+        diff_files = parse_diff(_SECRETS_DIFF)
+        engine.config.is_gov = True
+
+        # We manually modify one of the catalog entries to be active only in fedramp
+        control = engine.catalog.by_id("IA-5 (1)")
+        if control:
+            control.fedramp_membership = {"moderate": False}
+        verdict = engine.scan(diff_files)
+
+        # Should not include IA-5 (1) because we set its fedramp_membership["moderate"] to False
+        findings_with_ia5 = [f for f in verdict.findings if f.control_id == "IA-5 (1)"]
+        assert len(findings_with_ia5) == 0
+
+    def test_scan_ignores_excluded_controls(self, engine):
+        from controlgate.models import Finding
+
+        # Create a mock finding that is definitely returned
+        dummy_finding = Finding(
+            gate="mock_gate",
+            control_id="IA-5 (1)",
+            control_name="Authenticator Management",
+            severity="HIGH",
+            non_negotiable=True,
+            file="app.py",
+            line=1,
+            description="Mock finding",
+            evidence="Mock evidence",
+            remediation="Mock remediation"
+        )
+
+        # Override the gate's scan method to just return our dummy
+        for gate in engine._gates:
+            gate.scan = lambda files: [dummy_finding]
+
+        # Add IA-5 (1) to the excluded list
+        engine.config.excluded_controls = ["IA-5 (1)"]
+
+        diff_files = parse_diff(_SECRETS_DIFF)
+        verdict = engine.scan(diff_files)
+
+        # Verify it was excluded
+        assert len(verdict.findings) == 0

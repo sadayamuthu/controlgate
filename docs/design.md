@@ -180,6 +180,7 @@ ControlGate produces a structured verdict for each scan:
   "timestamp": "2026-02-19T23:00:00Z",
   "summary": "2 BLOCK, 3 WARN, 5 PASS findings",
   "baseline_target": "moderate",
+  "is_gov": false,
   "findings": [
     {
       "gate": "secrets",
@@ -297,7 +298,8 @@ Every finding links back to specific control metadata:
 
 ```yaml
 # ControlGate Configuration
-baseline: moderate              # Target NIST baseline (low | moderate | high)
+baseline: moderate              # Target NIST baseline (low | moderate | high | privacy | li-saas)
+gov: true                       # If true, evaluates against FedRAMP baselines instead of standard NIST
 catalog: baseline/nist80053r5_full_catalog_enriched.json
 
 gates:

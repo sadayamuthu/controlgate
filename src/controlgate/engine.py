@@ -45,23 +45,36 @@ class ControlGateEngine:
         for gate in self._gates:
             findings = gate.scan(filtered_files)
 
-            # Filter excluded controls and ignored severities
-            findings = [
-                f
-                for f in findings
-                if not self.config.is_control_excluded(f.control_id)
-                and f.severity not in self.config.ignore
-            ]
+            # Filter excluded controls, ignored severities, and check baseline membership
+            valid_findings = []
+            for f in findings:
+                if self.config.is_control_excluded(f.control_id):
+                    continue
+                if f.severity in self.config.ignore:
+                    continue
+
+                # Check baseline membership
+                control = self.catalog.by_id(f.control_id)
+                if not control:
+                    continue
+
+                if self.config.is_gov:
+                    is_member = control.fedramp_membership.get(self.config.baseline, False)
+                else:
+                    is_member = control.baseline_membership.get(self.config.baseline, False)
+
+                if is_member:
+                    valid_findings.append(f)
 
             # Assign action levels to each finding
-            for finding in findings:
+            for finding in valid_findings:
                 finding.action = self._determine_action(finding)
 
-            all_findings.extend(findings)
+            all_findings.extend(valid_findings)
 
             # Compute gate summary
-            gate_status = self._worst_action(findings) if findings else Action.PASS.value
-            gate_summaries[gate.gate_id] = GateSummary(status=gate_status, findings=len(findings))
+            gate_status = self._worst_action(valid_findings) if valid_findings else Action.PASS.value
+            gate_summaries[gate.gate_id] = GateSummary(status=gate_status, findings=len(valid_findings))
 
         # Compute overall verdict
         overall = self._compute_overall_verdict(all_findings)

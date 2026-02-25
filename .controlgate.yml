@@ -1,5 +1,6 @@
 # ControlGate Configuration
-baseline: moderate              # Target NIST baseline (low | moderate | high)
+baseline: moderate              # Target NIST baseline (low | moderate | high | privacy | li-saas)
+gov: false                      # If true, evaluates against FedRAMP baselines instead of standard NIST
 catalog: baseline/nist80053r5_full_catalog_enriched.json
 
 gates:
