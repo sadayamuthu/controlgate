@@ -143,7 +143,7 @@ class TestEngine:
             line=1,
             description="Mock finding",
             evidence="Mock evidence",
-            remediation="Mock remediation"
+            remediation="Mock remediation",
         )
 
         # Override the gate's scan method to just return our dummy

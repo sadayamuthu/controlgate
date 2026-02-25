@@ -73,8 +73,12 @@ class ControlGateEngine:
             all_findings.extend(valid_findings)
 
             # Compute gate summary
-            gate_status = self._worst_action(valid_findings) if valid_findings else Action.PASS.value
-            gate_summaries[gate.gate_id] = GateSummary(status=gate_status, findings=len(valid_findings))
+            gate_status = (
+                self._worst_action(valid_findings) if valid_findings else Action.PASS.value
+            )
+            gate_summaries[gate.gate_id] = GateSummary(
+                status=gate_status, findings=len(valid_findings)
+            )
 
         # Compute overall verdict
         overall = self._compute_overall_verdict(all_findings)
