@@ -1,5 +1,6 @@
 """Security gate scanners for ControlGate."""
 
+from controlgate.gates.api_gate import APIGate
 from controlgate.gates.audit_gate import AuditGate
 from controlgate.gates.change_gate import ChangeGate
 from controlgate.gates.crypto_gate import CryptoGate
@@ -20,6 +21,7 @@ ALL_GATES = [
     AuditGate,
     ChangeGate,
     DepsGate,
+    APIGate,
 ]
 
 __all__ = [
@@ -32,5 +34,6 @@ __all__ = [
     "AuditGate",
     "ChangeGate",
     "DepsGate",
+    "APIGate",
     "ALL_GATES",
 ]
