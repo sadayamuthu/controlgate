@@ -14,8 +14,8 @@
 
 | # | Regex | Description | Control | Remediation |
 |---|---|---|---|---|
-| 1 | `"Action"\s*:\s*"\*"|'Action'\s*:\s*'\*'` | Wildcard IAM action detected — grants all permissions | AC-6 | Apply least privilege: specify only the exact actions needed |
-| 2 | `"Resource"\s*:\s*"\*"|'Resource'\s*:\s*'\*'` | Wildcard resource in IAM policy — applies to all resources | AC-6 | Scope resources to specific ARNs instead of using wildcards |
+| 1 | `"Action"\s*:\s*"\*"\|'Action'\s*:\s*'\*'` | Wildcard IAM action detected — grants all permissions | AC-6 | Apply least privilege: specify only the exact actions needed |
+| 2 | `"Resource"\s*:\s*"\*"\|'Resource'\s*:\s*'\*'` | Wildcard resource in IAM policy — applies to all resources | AC-6 | Scope resources to specific ARNs instead of using wildcards |
 | 3 | `"Effect"\s*:\s*"Allow".*"Action"\s*:\s*"\*"` | IAM policy allows all actions | AC-6 | Follow least privilege principle — enumerate specific actions needed |
 | 4 | `(?i)(?:AdministratorAccess|PowerUserAccess|FullAccess)` | Overly permissive managed policy referenced | AC-6 | Use custom policies with minimum required permissions instead of broad managed policies |
 | 5 | `(?i)arn:aws:iam::.*:policy/AdministratorAccess` | AdministratorAccess policy attached | AC-5 | Implement separation of duties — avoid admin access in application code |
