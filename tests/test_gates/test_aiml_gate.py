@@ -49,6 +49,16 @@ diff --git a/llm.py b/llm.py
 +    return llm.complete(prompt)
 """
 
+_PLAINTEXT_WEIGHTS_DIFF = """\
+diff --git a/config.py b/config.py
+--- /dev/null
++++ b/config.py
+@@ -0,0 +1,3 @@
++MODEL_WEIGHTS = "/data/models/prod_weights.bin"
++checkpoint_path = "s3://bucket/model.pt"
++weights_path = "/mnt/nfs/weights.ckpt"
+"""
+
 _CLEAN_DIFF = """\
 diff --git a/model.py b/model.py
 --- /dev/null
@@ -102,3 +112,13 @@ class TestAIMLGate:
         valid_ids = {"SI-10", "SC-28", "SR-3"}
         for f in findings:
             assert f.control_id in valid_ids
+
+    def test_detects_plaintext_model_weights(self, gate):
+        diff_files = parse_diff(_PLAINTEXT_WEIGHTS_DIFF)
+        findings = gate.scan(diff_files)
+        assert len(findings) > 0
+        assert any(
+            "plaintext" in f.description.lower() or "weight" in f.description.lower()
+            for f in findings
+        )
+        assert all(f.control_id == "SC-28" for f in findings)

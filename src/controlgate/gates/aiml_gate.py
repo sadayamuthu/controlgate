@@ -45,6 +45,14 @@ _PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
         "SI-10",
         "Sanitize and validate user input before including in prompts; use structured message formats",
     ),
+    (
+        re.compile(
+            r"""(?i)(?:model_path|weights_path|checkpoint_path|model_weights)\s*=\s*["'][^"']+["']"""
+        ),
+        "Model weights path stored in plaintext config — weights location exposed without encryption",
+        "SC-28",
+        "Store model paths in a secrets manager or encrypted config; avoid hardcoding weight locations",
+    ),
 ]
 
 
