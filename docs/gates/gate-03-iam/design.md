@@ -2,15 +2,13 @@
 
 **gate_id:** `iam`
 **NIST Controls:** AC-3, AC-4, AC-5, AC-6
-**Priority:** High
+**Priority:** 🔴 High
 
 ---
 
 ## Purpose
 
-Prevents overly permissive identity and access management configurations from reaching production. Wildcard IAM actions and resources, over-broad managed policies (AdministratorAccess, PowerUserAccess), wildcard CORS origins, unauthenticated route handlers, and unconstrained STS AssumeRole calls are among the most exploited misconfigurations in cloud environments. This gate enforces least-privilege principles at commit time by scanning for these patterns across policy documents, application code, and infrastructure configuration.
-
----
+Gate 3 detects overly permissive IAM policies, missing authorization checks, wildcard permissions, and broad CORS configurations in IaC, application code, and API config. By scanning every added line at commit time, it enforces least-privilege and access-control principles before misconfigured policies can reach production environments.
 
 ## What This Gate Detects
 
@@ -18,7 +16,7 @@ Prevents overly permissive identity and access management configurations from re
 |---|---|---|
 | Wildcard IAM action (`"Action": "*"`) | Grants the principal permission to perform every AWS action; any compromise becomes a full account takeover | AC-6 |
 | Wildcard IAM resource (`"Resource": "*"`) | Applies the policy to every resource in the account rather than scoping to specific ARNs | AC-6 |
-| IAM policy allowing all actions (`"Effect": "Allow"` with `"Action": "*"`) | Explicit allow-all in a policy document; combined with wildcard resource grants unrestricted access | AC-6 |
+| IAM policy allowing all actions (`"Effect": "Allow"` with `"Action": "*"`) | Explicit allow-all in a policy document; combined with a wildcard resource grants unrestricted access | AC-6 |
 | Overly permissive managed policy reference (AdministratorAccess, PowerUserAccess, FullAccess) | Broad managed policies violate least privilege and are frequently involved in privilege escalation | AC-6 |
 | AdministratorAccess policy ARN attached | Direct attachment of the AWS AdministratorAccess managed policy in code or IaC | AC-5 |
 | Wildcard CORS origin (`Access-Control-Allow-Origin: *`) | Allows any external domain to make credentialed cross-origin requests | AC-4 |
@@ -27,25 +25,17 @@ Prevents overly permissive identity and access management configurations from re
 | Authentication bypass keywords (public, anonymous, no-auth, skip-auth, allow-all) | Explicit markers indicating intentional or accidental auth bypass | AC-3 |
 | STS AssumeRole without condition constraints | Assume-role calls without MFA, IP, or time conditions can be abused if credentials are compromised | AC-3 |
 
----
-
 ## Scope
 
-- **Scans:** all added lines in every file in the diff
-- **File types targeted:** all file types; useful across `.json` policy documents, `.tf`/`.yml` IaC files, and Python/JavaScript application code
-- **Special detection:** none; standard pattern loop only
-
----
+- Scans all added lines in every file included in the diff
+- No file-type filter — patterns are evaluated against all file types (`.json`, `.tf`, `.yml`, `.py`, `.js`, etc.)
+- Deleted and unmodified lines are not scanned
 
 ## Known Limitations
 
-- Does not scan deleted or unmodified lines
-- The unauthenticated route pattern matches any `@app.route(...)` on its own line regardless of whether an auth decorator exists on the preceding line; expect false positives on well-authenticated route definitions
-- Does not parse IAM JSON structure; nested or multi-statement policies with partial wildcards may be missed
-- STS AssumeRole detection fires on any reference to the API; it cannot determine whether conditions are set in a separate Policy block
-- CORS detection covers common patterns but not all framework-specific CORS libraries
-
----
+- The Flask route-decorator check is heuristic — it only fires when `@app.route()` appears with no other decorators on the same line
+- Cannot verify whether a named auth decorator is actually enforced at runtime
+- Does not analyze IAM policy documents beyond added lines; nested or multi-statement policies with partial wildcards in unchanged lines may be missed
 
 ## NIST Control Mapping
 
