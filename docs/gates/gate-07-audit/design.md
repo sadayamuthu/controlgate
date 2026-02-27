@@ -2,7 +2,7 @@
 
 **gate_id:** `audit`
 **NIST Controls:** AU-2, AU-3, AU-12
-**Priority:** High
+**Priority:** 🔴 High
 
 ---
 
@@ -17,7 +17,7 @@ Ensures that security-relevant events are logged and that the audit trail is not
 | Detection | Why It Matters | NIST Control |
 |---|---|---|
 | Removed logging statement | Deleting a log call may eliminate the only record of an event from the audit trail | AU-12 |
-| Security-critical function added without logging (login, logout, authenticate, authorize, verify, check_permission, validate_token, reset_password, change_password, create_user, delete_user, grant_role, revoke_role, signup, signin) | Authentication and access-control events that are not logged cannot be used for incident detection or forensic reconstruction | AU-2 |
+| Security-critical function added without logging (`login`, `logout`, `authenticate`, `authorize`, `verify`, `check_permission`, `validate_token`, `reset_password`, `change_password`, `create_user`, `delete_user`, `grant_role`, `revoke_role`, `signup`, `signin`) | Authentication and access-control events that are not logged cannot be used for incident detection or forensic reconstruction | AU-2 |
 | SSN or SIN logged | Social security numbers in log output create a PII data exposure incident | AU-3 |
 | Password, secret, token, or API key logged | Credential material in log files enables secondary credential compromise | AU-3 |
 | Credit card number or CVV logged | Payment card data in logs creates a PCI-DSS compliance violation | AU-3 |
@@ -27,19 +27,23 @@ Ensures that security-relevant events are logged and that the audit trail is not
 
 ## Scope
 
-- **Scans:** removed lines (via `hunk.removed_lines`) for deleted log statements; added lines (via `diff_file.all_added_lines`) for PII in logs; added lines grouped per hunk for the auth-function-without-logging heuristic
-- **File types targeted:** all file types; no extension filter is applied
-- **Special detection:** one of only two gates in ControlGate that inspects removed lines; the auth-function heuristic checks all added lines in a hunk collectively rather than evaluating each line independently
+This gate scans **both added lines and removed lines**, making it one of only two gates in ControlGate that reads `hunk.removed_lines`. Three distinct scanning mechanisms are applied per diff file:
+
+- **Removed-line scan** (`_check_removed_logging`): iterates `hunk.removed_lines` across all hunks to detect deleted log statements; uses the `_LOGGING_STATEMENT` pattern.
+- **Auth-function heuristic** (`_check_auth_logging`): iterates added lines grouped per hunk; joins all added lines in a hunk into a single string and checks for an auth/security function name without an accompanying log call in the same hunk; uses both `_AUTH_FUNCTION_PATTERNS` and `_LOGGING_STATEMENT`.
+- **PII-in-log scan** (`_check_pii_in_logs`): iterates `diff_file.all_added_lines` and runs each added line against the four `_PII_LOG_PATTERNS`.
+
+No file-extension filter is applied; all files in the diff are scanned.
 
 ---
 
 ## Known Limitations
 
-- Does not perform cross-hunk analysis for the auth-function heuristic; if a function definition and its log statement appear in different hunks of the same diff, the heuristic may report a false positive
-- The auth-function-without-logging heuristic matches on function names only; higher-order wrappers or decorators that provide logging outside the function body will still trigger the finding
-- PII detection relies on pattern proximity (log call and PII keyword on the same line); structured logging calls that pass objects containing PII as arguments may not be detected
-- Removed-logging detection cannot distinguish intentional removal (superseded by a better logging framework) from accidental removal; all removed log statements are flagged
-- `print()` is treated as a logging statement for removed-line detection and the auth-function heuristic, which may produce false positives on diagnostic print statements
+- The auth-function-without-logging check is a **heuristic operating per hunk**: if a function definition and its log statement appear in different hunks of the same diff, the heuristic will produce a false positive.
+- The gate **cannot detect logging done in a called function**, decorator, or middleware outside the function body; it only checks whether the same hunk that introduces the function also contains a log call.
+- **PII detection is keyword-based and line-scoped**: the regex requires the logging call and the PII keyword to appear on the same line. Structured logging calls that build a dict argument spread across multiple lines will not be detected.
+- Removed-logging detection cannot distinguish intentional removal (superseded by a better framework) from accidental removal; all removed log statements are flagged.
+- `print()` is treated as a logging statement for both removed-line detection and the auth-function heuristic, which may produce false positives on diagnostic print statements.
 
 ---
 
