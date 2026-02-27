@@ -9,6 +9,7 @@ from controlgate.gates.iac_gate import IaCGate
 from controlgate.gates.iam_gate import IAMGate
 from controlgate.gates.input_gate import InputGate
 from controlgate.gates.sbom_gate import SBOMGate
+from controlgate.gates.privacy_gate import PrivacyGate
 from controlgate.gates.secrets_gate import SecretsGate
 
 ALL_GATES = [
@@ -22,6 +23,7 @@ ALL_GATES = [
     ChangeGate,
     DepsGate,
     APIGate,
+    PrivacyGate,
 ]
 
 __all__ = [
@@ -35,5 +37,6 @@ __all__ = [
     "ChangeGate",
     "DepsGate",
     "APIGate",
+    "PrivacyGate",
     "ALL_GATES",
 ]
