@@ -9,6 +9,7 @@ from controlgate.gates.iac_gate import IaCGate
 from controlgate.gates.iam_gate import IAMGate
 from controlgate.gates.incident_gate import IncidentGate
 from controlgate.gates.input_gate import InputGate
+from controlgate.gates.memsafe_gate import MemSafeGate
 from controlgate.gates.observability_gate import ObservabilityGate
 from controlgate.gates.privacy_gate import PrivacyGate
 from controlgate.gates.resilience_gate import ResilienceGate
@@ -30,6 +31,7 @@ ALL_GATES = [
     ResilienceGate,
     IncidentGate,
     ObservabilityGate,
+    MemSafeGate,
 ]
 
 __all__ = [
@@ -47,5 +49,6 @@ __all__ = [
     "ResilienceGate",
     "IncidentGate",
     "ObservabilityGate",
+    "MemSafeGate",
     "ALL_GATES",
 ]
