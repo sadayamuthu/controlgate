@@ -17,6 +17,7 @@ GATE_CONTROL_MAP: dict[str, list[str]] = {
     "input_validation": ["SI-7", "SI-10", "SI-11", "SI-16"],
     "audit": ["AU-2", "AU-3", "AU-12"],
     "change_control": ["CM-3", "CM-4", "CM-5"],
+    "deps":          ["RA-5", "SI-2", "SA-12"],
 }
 
 
