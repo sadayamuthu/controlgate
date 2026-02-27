@@ -69,6 +69,23 @@ diff --git a/model.py b/model.py
 +model.eval()
 """
 
+# NOTE: comment-line trade-off — all_added_lines (models.py) collects every
+# added line verbatim; no comment-prefix stripping is applied by the diff
+# parser.  A commented-out path like `# model_path = "/data/weights.bin"`
+# would still fire SC-28.  This is an accepted, consistent behaviour across
+# all 18 gates (see test_memsafe_gate.py, test_secrets_gate.py — neither
+# gates filters comment lines either).  Document with a test below so the
+# behaviour is intentional and visible.
+_SAFE_WEIGHTS_DIFF = """\
+diff --git a/config.py b/config.py
+--- /dev/null
++++ b/config.py
+@@ -0,0 +1,3 @@
++model_path = os.environ["MODEL_PATH"]
++checkpoint_path = config.get("checkpoint")
++weights_path = vault.read_secret("weights_path")
+"""
+
 
 class TestAIMLGate:
     def test_detects_trust_remote_code(self, gate):
@@ -122,3 +139,11 @@ class TestAIMLGate:
             for f in findings
         )
         assert all(f.control_id == "SC-28" for f in findings)
+
+    def test_no_false_positive_safe_model_path_access(self, gate):
+        # Safe alternatives: env var lookup, config dict access, and secrets
+        # manager calls do NOT hardcode a path string, so SC-28 must not fire.
+        diff_files = parse_diff(_SAFE_WEIGHTS_DIFF)
+        findings = gate.scan(diff_files)
+        sc28_findings = [f for f in findings if f.control_id == "SC-28"]
+        assert len(sc28_findings) == 0
