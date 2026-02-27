@@ -63,6 +63,18 @@ diff --git a/app.py b/app.py
 """
 
 
+_CFFI_DIFF = """\
+diff --git a/bridge.py b/bridge.py
+--- /dev/null
++++ b/bridge.py
+@@ -0,0 +1,4 @@
++import cffi
++ffi = cffi.FFI()
++buf = ffi.buffer(ptr, size)
++data = ffi.cast("uint8_t *", ptr)
+"""
+
+
 class TestMemSafeGate:
     def test_detects_eval_dynamic(self, gate):
         diff_files = parse_diff(_EVAL_DYNAMIC_DIFF)
@@ -102,3 +114,9 @@ class TestMemSafeGate:
         valid_ids = {"SI-16", "CM-7"}
         for f in findings:
             assert f.control_id in valid_ids
+
+    def test_detects_cffi_memory_ops(self, gate):
+        diff_files = parse_diff(_CFFI_DIFF)
+        findings = gate.scan(diff_files)
+        assert len(findings) > 0
+        assert any("cffi" in f.description.lower() for f in findings)

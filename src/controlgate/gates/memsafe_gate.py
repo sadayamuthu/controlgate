@@ -39,6 +39,12 @@ _PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
         "Audit ctypes usage; prefer cffi with stricter type checking or avoid direct memory access",
     ),
     (
+        re.compile(r"""ffi\.(?:cast|buffer|from_buffer|memmove)\s*\("""),
+        "cffi raw memory operation — bypasses Python memory safety",
+        "SI-16",
+        "Audit cffi usage; ensure pointer arithmetic is bounds-checked and never uses untrusted lengths",
+    ),
+    (
         re.compile(r"""\bstrcpy\s*\(|\bstrcat\s*\("""),
         "strcpy/strcat used without bounds checking — classic buffer overflow vector",
         "SI-16",
