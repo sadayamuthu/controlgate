@@ -58,7 +58,7 @@ class APIGate(BaseGate):
 
     name = "API Security Gate"
     gate_id = "api"
-    mapped_control_ids = ["SC-8", "AC-3", "SC-5", "SI-10"]
+    mapped_control_ids = ["SC-8", "AC-3"]
 
     def scan(self, diff_files: list[DiffFile]) -> list[Finding]:
         findings: list[Finding] = []

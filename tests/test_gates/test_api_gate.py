@@ -102,6 +102,12 @@ class TestAPIGate:
     def test_findings_have_valid_control_ids(self, gate):
         diff_files = parse_diff(_VERIFY_FALSE_DIFF)
         findings = gate.scan(diff_files)
-        valid_ids = {"SC-8", "AC-3", "SC-5", "SI-10"}
+        valid_ids = {"SC-8", "AC-3"}
         for f in findings:
             assert f.control_id in valid_ids
+
+    def test_detects_graphql_introspection(self, gate):
+        diff_files = parse_diff(_GRAPHQL_INTROSPECTION_DIFF)
+        findings = gate.scan(diff_files)
+        assert len(findings) > 0
+        assert any("graphql" in f.description.lower() or "introspection" in f.description.lower() for f in findings)
