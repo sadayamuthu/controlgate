@@ -15,7 +15,7 @@ from controlgate.models import DiffFile, Finding
 
 _PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
     (
-        re.compile(r"""--no-verify"""),
+        re.compile(r"""(?:pip|pip3|npm|yarn|gem)\b.*--no-verify|--no-verify.*(?:pip|pip3|npm|yarn|gem)\b"""),
         "Package integrity verification bypassed with --no-verify",
         "SA-12",
         "Remove --no-verify to ensure package checksums are validated",
@@ -31,6 +31,12 @@ _PATTERNS: list[tuple[re.Pattern, str, str, str]] = [
         "Insecure HTTP URL used for package registry — man-in-the-middle risk",
         "SI-2",
         "Use HTTPS for all package registry URLs",
+    ),
+    (
+        re.compile(r"""pip3?\s+install\s+(?!-r\s)[A-Za-z0-9][^\n]*(?:>=|<=|~=|!=|(?<![=!<>])>(?!=)|(?<![=!<>])<(?!=))"""),
+        "pip install with range version specifier — use == for reproducible installs",
+        "RA-5",
+        "Pin to exact versions (pip install package==1.2.3) for reproducibility",
     ),
     (
         re.compile(r"""pip\s+install\s+(?!-r\s)(?:[A-Za-z0-9][A-Za-z0-9_.-]*)(?:\s+(?![^\s]*==)[A-Za-z0-9][A-Za-z0-9_.-]*)*\s*$"""),

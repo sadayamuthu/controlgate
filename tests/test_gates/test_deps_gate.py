@@ -56,6 +56,24 @@ diff --git a/Dockerfile b/Dockerfile
 +CMD ["python", "app.py"]
 """
 
+_GIT_NO_VERIFY_DIFF = """\
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -1,3 +1,4 @@
+ release:
++\tgit commit --no-verify -m "release"
+"""
+
+_RANGE_SPECIFIER_DIFF = """\
+diff --git a/Dockerfile b/Dockerfile
+--- /dev/null
++++ b/Dockerfile
+@@ -0,0 +1,2 @@
++FROM python:3.11
++RUN pip install requests>=2.0.0
+"""
+
 
 class TestDepsGate:
     def test_detects_no_verify(self, gate):
@@ -84,6 +102,16 @@ class TestDepsGate:
         diff_files = parse_diff(_CLEAN_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) == 0
+
+    def test_git_no_verify_not_flagged(self, gate):
+        diff_files = parse_diff(_GIT_NO_VERIFY_DIFF)
+        findings = gate.scan(diff_files)
+        assert len(findings) == 0
+
+    def test_detects_range_specifier(self, gate):
+        diff_files = parse_diff(_RANGE_SPECIFIER_DIFF)
+        findings = gate.scan(diff_files)
+        assert len(findings) > 0
 
     def test_findings_have_gate_id(self, gate):
         diff_files = parse_diff(_NO_VERIFY_DIFF)
