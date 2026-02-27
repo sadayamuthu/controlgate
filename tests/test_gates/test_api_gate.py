@@ -71,7 +71,9 @@ class TestAPIGate:
         diff_files = parse_diff(_VERIFY_FALSE_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) > 0
-        assert any("verify" in f.description.lower() or "tls" in f.description.lower() for f in findings)
+        assert any(
+            "verify" in f.description.lower() or "tls" in f.description.lower() for f in findings
+        )
 
     def test_detects_cors_allow_all(self, gate):
         diff_files = parse_diff(_CORS_ALL_DIFF)
@@ -102,7 +104,7 @@ class TestAPIGate:
     def test_findings_have_valid_control_ids(self, gate):
         diff_files = parse_diff(_VERIFY_FALSE_DIFF)
         findings = gate.scan(diff_files)
-        valid_ids = {"SC-8", "AC-3"}
+        valid_ids = {"SC-8", "AC-3", "SC-5", "SI-10"}
         for f in findings:
             assert f.control_id in valid_ids
 
@@ -110,4 +112,7 @@ class TestAPIGate:
         diff_files = parse_diff(_GRAPHQL_INTROSPECTION_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) > 0
-        assert any("graphql" in f.description.lower() or "introspection" in f.description.lower() for f in findings)
+        assert any(
+            "graphql" in f.description.lower() or "introspection" in f.description.lower()
+            for f in findings
+        )
