@@ -26,6 +26,7 @@ GATE_CONTROL_MAP: dict[str, list[str]] = {
     "memsafe": ["SI-16", "CM-7"],
     "license": ["SA-4", "SR-3"],
     "aiml": ["SI-10", "SC-28", "SR-3"],
+    "container": ["CM-6", "CM-7", "SC-7", "SC-39", "AC-6", "SI-7", "AU-12", "SA-10", "SR-3"],
 }
 
 
