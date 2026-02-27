@@ -2,13 +2,13 @@
 
 **gate_id:** `change_control`
 **NIST Controls:** CM-3, CM-4, CM-5
-**Priority:** Medium
+**Priority:** 🟡 Medium
 
 ---
 
 ## Purpose
 
-Enforces change management discipline by detecting modifications to security-critical files and deployment configurations that require additional review, impact analysis, or administrator approval before being merged. Changes to CI/CD pipelines, Dockerfiles, Terraform configurations, IAM/RBAC policies, CODEOWNERS files, and branch protection settings carry disproportionate security risk relative to application code changes. This gate creates mandatory visibility for these changes by emitting findings that require a reviewer to acknowledge the security implications before the commit is accepted.
+Enforces change management discipline by flagging modifications to security-critical files, deployment configurations, and CODEOWNERS — ensuring these changes go through appropriate review. CI/CD pipelines, Dockerfiles, Terraform configurations, IAM/RBAC policies, CODEOWNERS files, and branch protection settings carry disproportionate security risk relative to ordinary application code changes, and this gate creates mandatory visibility by emitting findings that require a reviewer to acknowledge the security implications before a commit is accepted.
 
 ---
 
@@ -26,18 +26,18 @@ Enforces change management discipline by detecting modifications to security-cri
 ## Scope
 
 - **Scans:** file paths (for security-critical file and deployment config detection, and CODEOWNERS check) and added lines (for branch protection content pattern)
-- **File types targeted:** all file types; detections are primarily path-based using large regular expressions against `diff_file.path`
-- **Special detection:** most findings are generated from the file path rather than line content; only the branch protection pattern inspects added line text
+- **File types targeted:** all file types; no extension filter is applied
+- **Special detection:** most findings are generated from the **file path** rather than line content; the gate checks the path of each changed file against two large regular expressions (`_SECURITY_CRITICAL_FILES` and `_DEPLOY_CONFIG_FILES`); the CODEOWNERS check is also path-based (a case-insensitive string match on `diff_file.path`); only the branch protection pattern inspects added line text
 
 ---
 
 ## Known Limitations
 
-- Does not scan deleted or unmodified lines
-- Security-critical file detection is purely filename/path-based; a file containing critical security logic but named with a generic name will not be flagged
+- File-path matching is regex-based and may miss novel paths that follow unusual naming conventions not covered by the two compiled patterns
+- Cannot verify whether a formal change ticket actually exists for the modification; the gate emits a finding to prompt review but cannot confirm that the change management process has been followed
+- The branch protection check is line-content only and is a heuristic; it fires on any added line containing the words "branch protection" or "protected branch" regardless of context, including comments and documentation
 - The gate emits a finding for every matching file modification without assessing whether the change is benign; all security-critical file changes produce findings regardless of the nature of the modification
-- The branch protection line-content pattern is a heuristic; it fires on any added line containing the words "branch protection" or "protected branch" regardless of context (e.g., comments, documentation)
-- The CODEOWNERS check fires on any path containing the string `CODEOWNERS` (case-insensitive); changes that add restrictions are treated identically to changes that remove them
+- The CODEOWNERS check fires on any path containing `CODEOWNERS` (case-insensitive); changes that add restrictions are treated identically to changes that remove them
 
 ---
 
