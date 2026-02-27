@@ -21,6 +21,7 @@ GATE_CONTROL_MAP: dict[str, list[str]] = {
     "api":           ["SC-8", "AC-3"],
     "privacy":       ["PT-2", "PT-3", "SC-28"],
     "resilience":    ["CP-9", "CP-10", "SI-13"],
+    "incident":      ["IR-4", "IR-6", "AU-6"],
 }
 
 
