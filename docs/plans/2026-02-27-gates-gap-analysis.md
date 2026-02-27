@@ -1,7 +1,7 @@
 # Gates 9–18 Gap Analysis
 
 **Date:** 2026-02-27
-**Status:** Approved — Approach A (fix clear bugs, document known debt)
+**Status:** Complete — Approach A fixes applied 2026-02-27
 **Reviewer:** Design review against `docs/plans/2026-02-27-new-gates-design.md`
 
 ---
