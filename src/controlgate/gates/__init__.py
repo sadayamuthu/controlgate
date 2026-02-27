@@ -1,5 +1,6 @@
 """Security gate scanners for ControlGate."""
 
+from controlgate.gates.aiml_gate import AIMLGate
 from controlgate.gates.api_gate import APIGate
 from controlgate.gates.audit_gate import AuditGate
 from controlgate.gates.change_gate import ChangeGate
@@ -34,6 +35,7 @@ ALL_GATES = [
     ObservabilityGate,
     MemSafeGate,
     LicenseGate,
+    AIMLGate,
 ]
 
 __all__ = [
@@ -53,5 +55,6 @@ __all__ = [
     "ObservabilityGate",
     "MemSafeGate",
     "LicenseGate",
+    "AIMLGate",
     "ALL_GATES",
 ]
