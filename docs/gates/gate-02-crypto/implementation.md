@@ -32,9 +32,9 @@ Note: these tuples have only 3 fields; `SC-13` is hardcoded in `_check_line()` r
 |---|---|---|---|---|
 | 1 | `(?i)\b(?:hashlib\.)?md5\b` | Weak hash algorithm MD5 detected | SC-13 | Use SHA-256 or SHA-3 instead of MD5 (FIPS 180-4 compliant) |
 | 2 | `(?i)\b(?:hashlib\.)?sha1\b` | Weak hash algorithm SHA-1 detected | SC-13 | Use SHA-256 or SHA-3 instead of SHA-1 (FIPS 180-4 compliant) |
-| 3 | `(?i)\bDES\b(?!C\|K\|IGN)` | Weak cipher DES detected | SC-13 | Use AES-256 instead of DES |
+| 3 | `(?i)\bDES\b(?!C|K|IGN)` | Weak cipher DES detected | SC-13 | Use AES-256 instead of DES |
 | 4 | `(?i)\bRC4\b` | Weak cipher RC4 detected | SC-13 | Use AES-256 or ChaCha20 instead of RC4 |
-| 5 | `(?i)\b3DES\b\|triple.?des` | Weak cipher 3DES/TripleDES detected | SC-13 | Use AES-256 instead of 3DES |
+| 5 | `(?i)\b3DES\b|triple.?des` | Weak cipher 3DES/TripleDES detected | SC-13 | Use AES-256 instead of 3DES |
 | 6 | `(?i)\bBlowfish\b` | Weak cipher Blowfish detected | SC-13 | Use AES-256 or ChaCha20 instead of Blowfish |
 | 7 | `(?i)ECB\b` | Insecure cipher mode ECB detected | SC-13 | Use CBC, GCM, or CTR mode instead of ECB |
 
@@ -45,7 +45,7 @@ Note: these tuples have only 3 fields; `SC-13` is hardcoded in `_check_line()` r
 | 8 | `http://(?!localhost\|127\.0\.0\.1\|0\.0\.0\.0\|example\.com)` | Unencrypted HTTP URL in production code | SC-8 | Use HTTPS for all production endpoints to ensure transmission confidentiality |
 | 9 | `(?i)ssl[_.]?verify\s*[:=]\s*(?:False\|false\|0\|no\|off)` | SSL/TLS verification disabled | SC-8 | Never disable SSL verification in production. Fix certificate issues instead |
 | 10 | `(?i)verify\s*[:=]\s*(?:False\|false\|0)` | TLS certificate verification disabled | SC-8 | Never disable certificate verification in production code |
-| 11 | `(?i)CERT_NONE\|CERT_OPTIONAL` | Weak or disabled certificate validation | SC-17 | Use CERT_REQUIRED for all TLS connections |
+| 11 | `(?i)CERT_NONE|CERT_OPTIONAL` | Weak or disabled certificate validation | SC-17 | Use CERT_REQUIRED for all TLS connections |
 | 12 | `(?i)check_hostname\s*[:=]\s*(?:False\|false\|0)` | TLS hostname checking disabled | SC-8 | Enable hostname checking for TLS connections |
 | 13 | `(?i)self[_-]?signed\|selfsigned` | Self-signed certificate reference in production config | SC-17 | Use certificates from a trusted CA in production environments |
 | 14 | `(?i)(?:TLSv1(?:\.0)?\|SSLv[23])\b` | Deprecated TLS/SSL version detected | SC-8 | Use TLS 1.2 or higher. TLS 1.0, 1.1, and all SSL versions are deprecated |
