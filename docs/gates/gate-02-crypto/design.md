@@ -2,13 +2,13 @@
 
 **gate_id:** `crypto`
 **NIST Controls:** SC-8, SC-13, SC-17, SC-23
-**Priority:** High
+**Priority:** 🔴 High
 
 ---
 
 ## Purpose
 
-Prevents the introduction of cryptographically weak algorithms, insecure transport configurations, and broken session security into source code. Weak hash functions (MD5, SHA-1), deprecated ciphers (DES, RC4, 3DES, Blowfish), insecure cipher modes (ECB), disabled TLS verification, deprecated protocol versions, and misconfigured session cookies are common root causes of data breaches and compliance failures under FIPS 140-2/140-3 and PCI-DSS. This gate provides automated detection of these patterns at commit time, before they reach production.
+Gate 2 detects weak cryptographic algorithms, disabled TLS verification, deprecated protocol versions, and insecure session cookie configuration — preventing cryptographic failures that expose data in transit. By scanning all added lines at commit time, it catches dangerous patterns such as MD5/SHA-1 hash functions, DES/RC4/3DES/Blowfish/ECB ciphers, bare `http://` URLs, disabled certificate or hostname verification, deprecated TLS 1.0 and SSL versions, and misconfigured session cookies before they reach production systems.
 
 ---
 
@@ -27,9 +27,9 @@ Prevents the introduction of cryptographically weak algorithms, insecure transpo
 | SSL/TLS verification disabled (`ssl_verify=False`) | Disabling certificate verification eliminates protection against MITM attacks | SC-8 |
 | TLS certificate verification disabled (`verify=False`) | Same as above; commonly set during development and inadvertently left in production | SC-8 |
 | `CERT_NONE` or `CERT_OPTIONAL` in SSL context | Weak or absent certificate validation in Python ssl module | SC-17 |
-| TLS hostname checking disabled | Allows connections to any host with a valid certificate, defeating SNI-based security | SC-8 |
+| TLS hostname checking disabled (`check_hostname=False`) | Allows connections to any host with a valid certificate, defeating SNI-based security | SC-8 |
 | Self-signed certificate references | Self-signed certificates in production bypass trusted CA validation | SC-17 |
-| Deprecated TLS/SSL versions (TLS 1.0, TLS 1.1, SSLv2, SSLv3) | Deprecated versions have known vulnerabilities (POODLE, BEAST, DROWN); prohibited by PCI-DSS 3.2+ | SC-8 |
+| Deprecated TLS/SSL versions (TLSv1.0, SSLv2, SSLv3) | Deprecated versions have known vulnerabilities (POODLE, BEAST, DROWN); prohibited by PCI-DSS 3.2+ | SC-8 |
 | Insecure session/cookie flags (`Secure=False`, `HttpOnly=False`) | Cookies without Secure can be transmitted over HTTP; cookies without HttpOnly are accessible to JavaScript | SC-23 |
 | `SameSite=None` on cookies | Permits cross-site requests without CSRF token validation | SC-23 |
 
@@ -37,19 +37,19 @@ Prevents the introduction of cryptographically weak algorithms, insecure transpo
 
 ## Scope
 
-- **Scans:** all added lines in every file in the diff
-- **File types targeted:** all file types; no extension filter is applied
-- **Pattern groups:** three separate lists — `_WEAK_ALGO_PATTERNS` (7 patterns, SC-13), `_TLS_PATTERNS` (7 patterns, SC-8/SC-17), `_SESSION_PATTERNS` (2 patterns, SC-23); all three are evaluated for every added line
+- Scans all added lines in every file included in the diff
+- Applies to all file types; no extension filter is applied
+- Uses three internal pattern groups: `_WEAK_ALGO_PATTERNS` (7 patterns, SC-13), `_TLS_PATTERNS` (7 patterns, SC-8/SC-17), and `_SESSION_PATTERNS` (2 patterns, SC-23)
+- All three groups are evaluated for every added line; a single line may produce multiple findings
 
 ---
 
 ## Known Limitations
 
-- Does not scan deleted or unmodified lines
-- HTTP URL detection excludes `localhost`, `127.0.0.1`, `0.0.0.0`, and `example.com` but does not exclude other common test/dev hostnames
-- Will not detect weak algorithms used via third-party library abstractions that do not mention the algorithm by name (e.g., `legacy_hash()`)
-- Does not detect TLS configuration issues in binary config files or environment variable assignments that are never present in source
-- Self-signed certificate detection is heuristic (looks for the string "self-signed"); custom CA workflows may trigger false positives
+- Does not evaluate key length or key strength — only the algorithm name is matched, so a correctly-sized AES key is not confirmed
+- No cross-call analysis to confirm that HTTPS is actually used for all connections; only the literal string `http://` in added lines is flagged
+- The bare `http://` URL pattern excludes `localhost`, `127.0.0.1`, `0.0.0.0`, and `example.com` but does not exclude other common development or test hostnames
+- Will not detect weak algorithms used through third-party library abstractions that do not mention the algorithm by name
 
 ---
 

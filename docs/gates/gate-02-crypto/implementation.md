@@ -10,11 +10,13 @@
 
 ## Scan Method
 
-`scan()` iterates every `diff_file` and calls `_check_line()` for each added line. `_check_line()` runs three separate pattern loops in sequence:
+`scan()` iterates every `diff_file` in the input list and calls `_check_line()` for each added line (via `diff_file.all_added_lines`). No file-type filter is applied — all files are scanned regardless of extension.
 
-1. **`_WEAK_ALGO_PATTERNS`** — 3-tuple `(pattern, description, remediation)`; the control ID is hardcoded as `"SC-13"` inside `_check_line()`.
-2. **`_TLS_PATTERNS`** — 4-tuple `(pattern, description, control_id, remediation)`; control ID varies per pattern (SC-8 or SC-17).
-3. **`_SESSION_PATTERNS`** — 4-tuple `(pattern, description, control_id, remediation)`; all patterns map to SC-23.
+`_check_line()` runs three separate pattern loops in sequence across the three pattern groups:
+
+1. `_WEAK_ALGO_PATTERNS` — 3-tuple `(pattern, description, remediation)`; the control ID is hardcoded as `"SC-13"` inside `_check_line()`.
+2. `_TLS_PATTERNS` — 4-tuple `(pattern, description, control_id, remediation)`; control ID varies per pattern (SC-8 or SC-17).
+3. `_SESSION_PATTERNS` — 4-tuple `(pattern, description, control_id, remediation)`; all patterns map to SC-23.
 
 A single added line can produce multiple findings if it matches patterns from more than one group.
 
@@ -22,7 +24,9 @@ A single added line can produce multiple findings if it matches patterns from mo
 
 ## Patterns
 
-### Weak Algorithm Patterns (`_WEAK_ALGO_PATTERNS`) — control SC-13 hardcoded
+### Weak Algorithm Patterns (`_WEAK_ALGO_PATTERNS`) — all SC-13
+
+Note: these tuples have only 3 fields; `SC-13` is hardcoded in `_check_line()` rather than stored in the tuple.
 
 | # | Regex | Description | Control | Remediation |
 |---|---|---|---|---|
