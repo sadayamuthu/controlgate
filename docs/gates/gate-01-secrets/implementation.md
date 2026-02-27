@@ -52,7 +52,7 @@
 
 1. Scans the line for quoted strings matching `["']([A-Za-z0-9+/=\-_]{20,})["']`
 2. For each candidate token of length ≥20: computes Shannon entropy (bits per character)
-3. If entropy ≥ 4.5 AND no finding already exists for that line number, fires an IA-5 finding
+3. If entropy ≥ 4.5 AND no finding from this gate already exists for that line number, fires an IA-5 finding
 4. The duplicate-check prevents double-firing when a pattern already matched the same line
 
 Constants: `_ENTROPY_THRESHOLD = 4.5`, `_MIN_LENGTH_FOR_ENTROPY = 20`
@@ -63,11 +63,11 @@ Constants: `_ENTROPY_THRESHOLD = 4.5`, `_MIN_LENGTH_FOR_ENTROPY = 20`
 
 | Test | What It Verifies |
 |---|---|
-| `test_detects_aws_key` | AKIA/ASIA format AWS access key triggers IA-5 finding |
-| `test_detects_hardcoded_password` | `password = "secret123"` assignment triggers SC-28 |
-| `test_detects_private_key` | `-----BEGIN RSA PRIVATE KEY-----` triggers SC-12 |
-| `test_clean_code_no_findings` | Safe env-var-based code produces zero findings |
-| `test_detects_sensitive_file` | `.env` file path triggers SC-28 finding |
-| `test_detects_high_entropy_string` | Long random string triggers entropy-based IA-5 |
-| `test_findings_have_gate_id` | All findings carry `gate == "secrets"` |
-| `test_findings_have_valid_control_ids` | All findings use only IA-5, IA-6, SC-12, or SC-28 |
+| `test_detects_aws_key` | AKIA/ASIA format AWS access key triggers an IA-5 finding with "AWS" in the description |
+| `test_detects_hardcoded_password` | `DB_PASSWORD = "super_secret_123"` assignment triggers a finding with "credential" or "password" in the description |
+| `test_detects_private_key` | `-----BEGIN RSA PRIVATE KEY-----` header triggers a finding with "key" in the description |
+| `test_clean_code_no_findings` | Code that reads credentials from `os.environ` produces zero findings |
+| `test_detects_database_uri` | `postgres://user:pass@host/db` connection string triggers a finding with "connection string" or "credential" in the description |
+| `test_detects_github_token` | `ghp_…` GitHub Personal Access Token pattern triggers at least one finding |
+| `test_findings_have_gate_id` | Every finding from the AWS-key diff carries `gate == "secrets"` |
+| `test_findings_have_control_ids` | Every finding from the AWS-key diff uses a control ID within `{IA-5, IA-6, SC-12, SC-28}` |
