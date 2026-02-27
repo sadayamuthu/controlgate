@@ -10,7 +10,7 @@
 
 ## Scan Method
 
-`scan()` iterates every `diff_file` and calls `_check_line()` for each added line. `_check_line()` runs a single loop over `_INPUT_PATTERNS` (15 patterns), each a 4-tuple `(pattern, description, control_id, remediation)`. All patterns are evaluated for every added line; a single line can produce multiple findings.
+`scan()` iterates every `DiffFile` and calls `_check_line()` for each added line (`diff_file.all_added_lines`). `_check_line()` runs a single loop over `_INPUT_PATTERNS` — a module-level list of 4-tuples `(pattern, description, control_id, remediation)`. No file-type filter is applied; all file extensions are checked. All patterns are evaluated for every added line, so a single line can produce multiple findings.
 
 ---
 
@@ -18,13 +18,13 @@
 
 | # | Regex | Description | Control | Remediation |
 |---|---|---|---|---|
-| 1 | `(?i)(?:execute\|cursor\.execute\|query)\s*\(\s*f["']` | SQL query built with f-string — SQL injection risk | SI-10 | Use parameterized queries (cursor.execute('SELECT ... WHERE id = %s', (id,))) |
+| 1 | `(?i)(?:execute\|cursor\.execute\|query)\s*\(\s*f["']` | SQL query built with f-string — SQL injection risk | SI-10 | Use parameterized queries (`cursor.execute('SELECT ... WHERE id = %s', (id,))`) |
 | 2 | `(?i)(?:execute\|cursor\.execute\|query)\s*\(.*\.format\(` | SQL query built with .format() — SQL injection risk | SI-10 | Use parameterized queries instead of string formatting for SQL |
 | 3 | `(?i)(?:execute\|cursor\.execute\|query)\s*\(.*%\s` | SQL query built with % string interpolation — SQL injection risk | SI-10 | Use parameterized queries instead of % formatting for SQL |
 | 4 | `(?i)(?:execute\|cursor\.execute\|query)\s*\(.*\+\s*(?:request\|req\|params\|user\|input)` | SQL query built with concatenation of user input | SI-10 | Use parameterized queries. Never concatenate user input into SQL |
 | 5 | `(?i)\beval\s*\(` | Use of eval() — code injection risk | SI-10 | Avoid eval(). Use ast.literal_eval() for data parsing or json.loads() for JSON |
 | 6 | `(?i)\bexec\s*\(` | Use of exec() — code injection risk | SI-10 | Avoid exec(). Refactor to use safe alternatives |
-| 7 | `(?i)subprocess\.(?:call\|run\|Popen)\s*\(.*shell\s*=\s*True` | Shell command execution with shell=True — command injection risk | SI-10 | Use shell=False and pass command as a list: subprocess.run(['cmd', 'arg']) |
+| 7 | `(?i)subprocess\.(?:call\|run\|Popen)\s*\(.*shell\s*=\s*True` | Shell command execution with shell=True — command injection risk | SI-10 | Use shell=False and pass command as a list: `subprocess.run(['cmd', 'arg'])` |
 | 8 | `(?i)os\.system\s*\(` | Use of os.system() — command injection risk | SI-10 | Use subprocess.run() with shell=False instead of os.system() |
 | 9 | `(?i)os\.popen\s*\(` | Use of os.popen() — command injection risk | SI-10 | Use subprocess.run() with shell=False instead of os.popen() |
 | 10 | `(?i)\bpickle\.loads?\b` | Unsafe deserialization with pickle — arbitrary code execution risk | SI-10 | Use JSON or other safe serialization formats. Never unpickle untrusted data |
@@ -41,6 +41,6 @@
 
 | Test | What It Verifies |
 |---|---|
-| `test_detects_sql_injection` | `cursor.execute(f"SELECT * FROM users WHERE name = '{name}'")` triggers at least one finding with "SQL" in the description |
-| `test_detects_eval` | `result = eval(data)` triggers at least one finding with "eval" in the description |
-| `test_detects_bare_except` | `except: pass` triggers at least one finding with "except" in the description |
+| `test_detects_sql_injection` | `cursor.execute(f"SELECT * FROM users WHERE name = '{name}'")`triggers at least one finding with `"SQL"` in the description (pattern 1) |
+| `test_detects_eval` | `result = eval(data)` triggers at least one finding with `"eval"` in the description (pattern 5) |
+| `test_detects_bare_except` | `except: pass` triggers at least one finding with `"except"` in the description (pattern 12) |
