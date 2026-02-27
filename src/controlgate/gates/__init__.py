@@ -7,11 +7,12 @@ from controlgate.gates.crypto_gate import CryptoGate
 from controlgate.gates.deps_gate import DepsGate
 from controlgate.gates.iac_gate import IaCGate
 from controlgate.gates.iam_gate import IAMGate
-from controlgate.gates.input_gate import InputGate
-from controlgate.gates.sbom_gate import SBOMGate
 from controlgate.gates.incident_gate import IncidentGate
+from controlgate.gates.input_gate import InputGate
+from controlgate.gates.observability_gate import ObservabilityGate
 from controlgate.gates.privacy_gate import PrivacyGate
 from controlgate.gates.resilience_gate import ResilienceGate
+from controlgate.gates.sbom_gate import SBOMGate
 from controlgate.gates.secrets_gate import SecretsGate
 
 ALL_GATES = [
@@ -28,6 +29,7 @@ ALL_GATES = [
     PrivacyGate,
     ResilienceGate,
     IncidentGate,
+    ObservabilityGate,
 ]
 
 __all__ = [
@@ -44,5 +46,6 @@ __all__ = [
     "PrivacyGate",
     "ResilienceGate",
     "IncidentGate",
+    "ObservabilityGate",
     "ALL_GATES",
 ]
