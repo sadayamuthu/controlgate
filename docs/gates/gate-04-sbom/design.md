@@ -2,13 +2,13 @@
 
 **gate_id:** `sbom`
 **NIST Controls:** SR-3, SR-11, SA-10, SA-11
-**Priority:** Medium
+**Priority:** 🟡 Medium
 
 ---
 
 ## Purpose
 
-Reduces supply chain risk by detecting dependency management practices that allow untrusted or unverified software components to enter the build. Unpinned dependency versions permit silent package substitution attacks; missing lockfiles mean the exact set of transitive dependencies is not reproducible; modified CI/CD pipeline files create opportunities to inject malicious build steps; and weakened test coverage thresholds erode the assurance baseline. This gate provides automated visibility into these risks at the point where the manifest or pipeline change is introduced.
+Prevents unreviewed supply chain changes from entering the build by detecting three categories of risk: unpinned dependency versions that allow silent package substitution across install runs, CI/CD pipeline file modifications that create opportunities for unauthorized build-step injection, and dependency manifest changes that are not accompanied by a corresponding lockfile update (manifest-without-lockfile). Together these controls ensure that the resolved software component set remains deterministic, auditable, and reviewed before it reaches downstream environments.
 
 ---
 
@@ -16,33 +16,29 @@ Reduces supply chain risk by detecting dependency management practices that allo
 
 | Detection | Why It Matters | NIST Control |
 |---|---|---|
-| Dependency manifest modified without corresponding lockfile update | Without a lockfile update, the resolved dependency set is non-deterministic and may differ between environments | SR-3 |
-| Unpinned version specifier `>=` in dependency files | Allows any future version to be resolved; an attacker who compromises a package registry can silently inject malicious code | SR-11 |
-| Loose version specifier `~=` | Permits minor-version upgrades that may introduce breaking or malicious changes | SR-11 |
-| Wildcard version specifier `*` | Resolves to whatever the latest published version is at install time | SR-11 |
-| Version set to `latest` | Equivalent to a wildcard; provides no reproducibility guarantee | SR-11 |
-| Caret version range `^` | Allows minor and patch updates; non-deterministic across install runs | SR-11 |
-| Build/CI pipeline file modified | Pipeline changes can introduce unauthorized build steps, exfiltrate secrets, or alter artifact signing | SA-10 |
-| Test coverage threshold modification | Lowering or removing coverage thresholds weakens the assurance evidence produced by the test suite | SA-11 |
-| Test execution skipped or disabled | Disabling tests removes verification of functional and security properties | SA-11 |
+| Dependency manifest modified without corresponding lockfile update | Without a lockfile update the resolved dependency set is non-deterministic; transitive dependencies may silently change between environments and install runs | SR-3 |
+| Build/CI pipeline file modified | Pipeline changes can inject malicious build steps, exfiltrate secrets, alter artifact signing, or disable security checks without obvious code review signals | SA-10 |
+| Unpinned version specifier in added lines (`>=`, `~=`, `*`, `latest`, `^`) | Unpinned specifiers allow any future version to be resolved at install time; a compromised package registry can silently deliver a malicious version that satisfies the constraint | SR-11 |
+| Test coverage threshold lowered or test execution disabled | Weakening coverage thresholds or skipping tests removes verification of functional and security properties, eroding the assurance evidence produced by the test suite | SA-11 |
 
 ---
 
 ## Scope
 
-- **Scans:** file paths (for manifest/lockfile cross-check and pipeline file detection) and added lines (for unpinned version patterns and test coverage patterns)
-- **File types targeted:** all file types for line scanning; manifest check is basename-based (`package.json`, `requirements.txt`, `Pipfile`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Gemfile`, `composer.json`); pipeline check uses a filename regex
-- **Special detection:** cross-file lockfile check — when a manifest file appears in the diff, the gate checks whether any of its expected lockfiles also appear in the same diff
+- **Lockfile cross-check:** cross-file analysis — when a manifest file appears in the diff, the gate inspects the full set of modified file basenames across the entire diff to determine whether at least one accepted lockfile was also updated
+- **Pipeline file detection:** per-file path check against a filename regex; fires once per matching file regardless of line content
+- **Unpinned version patterns:** all added lines in every file in the diff are scanned; checks are not restricted to dependency manifest file types
+- **Test coverage weakening patterns:** all added lines in every file in the diff are scanned; checks are not restricted to configuration file types
 
 ---
 
 ## Known Limitations
 
-- Does not scan deleted or unmodified lines
-- Lockfile cross-check is per-commit: if the manifest and lockfile are updated in separate commits, this gate will fire on the manifest commit
-- Unpinned version patterns apply to all added lines in all files, not just dependency manifest files, which may produce false positives in documentation or configuration files that mention version ranges in a non-dependency context
-- Does not validate that the lockfile content is consistent with the manifest (only that a lockfile was also modified)
-- Pipeline file detection is filename-based; custom CI systems with non-standard filenames will not be detected
+- The lockfile cross-check uses basename matching (`path.split("/")[-1]`), so renaming or moving a lockfile to a non-standard path fools the check — only the filename portion is compared, not the full path
+- Does not scan binary lockfiles (e.g., compiled or encrypted lock formats); only text-based lockfile names are recognised
+- Cannot detect transitive dependency vulnerabilities — the gate confirms a lockfile was updated alongside the manifest but does not inspect or validate the lockfile content for known-vulnerable versions
+- Unpinned version patterns fire on any added line in any file, not exclusively in dependency manifest files, which may produce false positives in documentation, comments, or configuration files that mention version ranges in a non-dependency context
+- Pipeline file detection is filename-based; custom CI systems that use non-standard filenames will not be flagged
 
 ---
 
@@ -50,7 +46,7 @@ Reduces supply chain risk by detecting dependency management practices that allo
 
 | Control ID | Title | How This Gate Addresses It |
 |---|---|---|
-| SR-3 | Supply Chain Controls and Processes | Detects manifest changes without corresponding lockfile updates, ensuring the dependency supply chain remains auditable and reproducible |
-| SR-11 | Component Authenticity | Detects unpinned version specifiers that allow arbitrary component versions to be resolved, undermining component integrity |
-| SA-10 | Developer Configuration Management | Detects modifications to build/CI pipeline files that require security review to prevent unauthorized changes to the build process |
-| SA-11 | Developer Testing and Evaluation | Detects modifications that lower test coverage thresholds or disable test execution, weakening development-time security assurance |
+| SR-3 | Supply Chain Controls and Processes | Detects dependency manifest changes that are not accompanied by a lockfile update, ensuring the resolved dependency supply chain remains auditable and reproducible across environments |
+| SR-11 | Component Authenticity | Detects unpinned version specifiers (`>=`, `~=`, `*`, `latest`, `^`) that allow arbitrary component versions to be resolved at install time, undermining the integrity and verifiability of software components |
+| SA-10 | Developer Configuration Management | Detects modifications to build and CI/CD pipeline files, flagging changes that require security review to prevent unauthorized alterations to the build process or artifact pipeline |
+| SA-11 | Developer Testing and Evaluation | Detects changes that lower test coverage thresholds or disable test execution, preserving the development-time assurance evidence required to validate functional and security properties |

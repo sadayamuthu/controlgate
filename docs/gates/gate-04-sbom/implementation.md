@@ -1,7 +1,7 @@
 # Gate 4 — Supply Chain & SBOM Gate: Implementation Reference
 
 **Source file:** `src/controlgate/gates/sbom_gate.py`
-**Test file:** none
+**Test file:** `tests/test_gates/test_sbom_gate.py`
 **Class:** `SBOMGate`
 **gate_id:** `sbom`
 **mapped_control_ids:** `["SR-3", "SR-11", "SA-10", "SA-11"]`
@@ -10,14 +10,27 @@
 
 ## Scan Method
 
-`scan()` performs four distinct checks for each `diff_file`:
+`scan()` operates in three phases that execute for every `diff_file` in the input list:
 
-1. **Manifest/lockfile cross-check** — if the file's basename is a key in `_MANIFEST_LOCKFILE_MAP`, the gate checks whether any of the expected lockfile basenames appear in the set of all modified file basenames in the diff. If no lockfile is present, fires one SR-3 finding at line 1.
-2. **Pipeline file detection** — if the file path matches `_PIPELINE_FILES` regex, fires one SA-10 finding at line 1.
-3. **Unpinned version patterns** — for each added line, runs all `_UNPINNED_PATTERNS` (5 patterns). Each match fires one SR-11 finding.
-4. **Test coverage weakening** — for each added line, runs all `_TEST_COVERAGE_PATTERNS` (2 patterns). Each match fires one SA-11 finding.
+**Phase 1 — Cross-file lockfile check (SR-3)**
+Before iterating files, `scan()` builds a set of all file basenames present in the diff:
 
-Checks 3 and 4 run on all files regardless of filename.
+```python
+basenames = {df.path.split("/")[-1] for df in diff_files}
+```
+
+For each `diff_file` whose basename is a key in `_MANIFEST_LOCKFILE_MAP`, the gate checks whether any of the expected lockfile basenames appear in `basenames`. If none match, one SR-3 finding is emitted at line 1 of the manifest file. This check fires once per manifest file per diff, not per added line.
+
+**Phase 2 — Pipeline file detection (SA-10)**
+For each `diff_file`, the gate tests `diff_file.path` against the `_PIPELINE_FILES` regex. Any match fires one SA-10 finding at line 1, regardless of the file's line content. The check is path-based only.
+
+**Phase 3 — Added-line pattern scan (SR-11 and SA-11)**
+For each added line (`line_no`, `line`) in `diff_file.all_added_lines`, the gate runs two independent pattern loops:
+
+- All five `_UNPINNED_PATTERNS` are tested against the line; each match fires one SR-11 finding.
+- Both `_TEST_COVERAGE_PATTERNS` are tested against the line; each match fires one SA-11 finding.
+
+Phases 2 and 3 run on every file in the diff regardless of filename. A single file can produce findings from both phases simultaneously (e.g., a GitHub Actions workflow that also contains a version specifier).
 
 ---
 
@@ -46,19 +59,21 @@ Checks 3 and 4 run on all files regardless of filename.
 
 ### Manifest / Lockfile Cross-Check
 
-The gate collects the set of all file basenames in the diff at the start of `scan()`:
+The gate collects the set of all file basenames present in the diff at the start of `scan()`:
 
 ```python
 basenames = {df.path.split("/")[-1] for df in diff_files}
 ```
 
-For each `diff_file` whose basename appears as a key in `_MANIFEST_LOCKFILE_MAP`, it checks:
+For each `diff_file` whose basename appears as a key in `_MANIFEST_LOCKFILE_MAP`, the gate evaluates:
 
 ```python
 has_lockfile_update = any(lock_name in basenames for lock_name in expected_locks)
 ```
 
-The manifest-to-lockfile mapping is:
+Matching is basename-only. If the manifest file is `services/backend/package.json`, only the string `"package.json"` is looked up in `_MANIFEST_LOCKFILE_MAP`; similarly, only the basenames of potential lockfiles are checked against `basenames`. A lockfile at `services/backend/package-lock.json` satisfies the check because its basename `"package-lock.json"` will be present in `basenames`.
+
+The manifest-to-lockfile mapping used by `_MANIFEST_LOCKFILE_MAP` is:
 
 | Manifest | Accepted lockfiles |
 |---|---|
@@ -71,11 +86,11 @@ The manifest-to-lockfile mapping is:
 | `Gemfile` | `Gemfile.lock` |
 | `composer.json` | `composer.lock` |
 
-If no matching lockfile basename is present in the diff, an SR-3 finding is emitted for the manifest file at line 1. The finding evidence message includes the list of expected lockfile names.
+If no matching lockfile basename is present in the diff, one SR-3 finding is emitted for the manifest file at line 1. The finding's `evidence` field lists all accepted lockfile names so the developer knows which files to update.
 
 ### Pipeline File Detection
 
-The gate checks each file path against the `_PIPELINE_FILES` regex:
+The gate tests each file's path against the module-level `_PIPELINE_FILES` compiled regex:
 
 ```
 (?i)(?:\.github/workflows/.*\.ya?ml|Jenkinsfile|\.gitlab-ci\.ya?ml|
@@ -83,19 +98,18 @@ azure-pipelines\.ya?ml|\.circleci/config\.yml|Dockerfile|docker-compose.*\.ya?ml
 Makefile|\.travis\.ya?ml|cloudbuild\.ya?ml)
 ```
 
-Any match fires one SA-10 finding at line 1, regardless of line content.
-
----
-
-## Known Debt / Deferred Patterns
-
-- No test file exists for this gate; all behaviour is untested by automated tests
-- The `_UNPINNED_PATTERNS` apply to all added lines in the diff, not exclusively to dependency manifest files, producing false positives in unrelated files that mention version ranges (e.g., documentation, comments)
-- There is no detection for dependency confusion attacks (private package names that could be shadowed by public registry packages)
-- There is no integrity verification check (e.g., hash pinning in `requirements.txt` via `--hash=`)
+The regex is case-insensitive (`(?i)`) and matches common CI/CD and build system filenames. Any file whose path matches fires one SA-10 finding at line 1. The finding description is fixed: `"Build/CI pipeline file modified — requires security review"`.
 
 ---
 
 ## Test Coverage
 
-No test file exists for `SBOMGate`. This gate has no automated test coverage.
+The `SBOMGate` is tested within `tests/test_coverage_gaps.py` under the `TestSBOMGate` class.
+
+| Test | What It Verifies |
+|---|---|
+| `test_detects_unpinned_deps` | A `requirements.txt` diff containing `flask>=2.0` and `boto3~=1.26` produces at least one finding with `control_id == "SR-11"` |
+| `test_detects_manifest_without_lockfile` | A diff that modifies `requirements.txt` without updating any accepted lockfile produces at least one finding with `control_id == "SR-3"` |
+| `test_detects_pipeline_change` | A diff that modifies `.github/workflows/ci.yml` produces at least one finding with `control_id == "SA-10"` |
+| `test_detects_coverage_weakening` | A diff adding `cov_fail_under = 50` to `setup.cfg` produces at least one finding with `control_id == "SA-11"` |
+| `test_detects_skip_tests` | A diff adding `skip_tests = True` to `config.py` produces at least one finding with `control_id == "SA-11"` |
