@@ -10,7 +10,7 @@
 
 ## Scan Method
 
-`scan()` iterates every `diff_file`. Before pattern evaluation, it calls `_is_iac_file(diff_file.path)`. If the file does not qualify as an IaC file, it is skipped entirely. For qualifying files, `_check_line()` is called for each added line. `_check_line()` runs a single loop over `_IAC_PATTERNS` (14 patterns), each a 4-tuple `(pattern, description, control_id, remediation)`.
+`scan()` iterates every `diff_file`. Before pattern evaluation, it calls `_is_iac_file(diff_file.path)`. If the file does not qualify as an IaC file, it is skipped entirely and the loop advances to the next file. For qualifying files, `_check_line()` is called for each added line via `diff_file.all_added_lines`. `_check_line()` runs a single loop over `_IAC_PATTERNS` (14 patterns), each a 4-tuple `(pattern, description, control_id, remediation)`. A `Finding` is appended for every pattern that matches.
 
 ---
 
@@ -69,6 +69,6 @@ Files that match none of these criteria are skipped; no findings are produced fo
 
 | Test | What It Verifies |
 |---|---|
-| `test_detects_public_ingress` | `cidr_blocks = ["0.0.0.0/0"]` in a `.tf` file triggers at least one finding with "0.0.0.0/0" in the description |
-| `test_detects_root_container` | `USER root` in a `Dockerfile` triggers at least one finding with "root" in the description |
+| `test_detects_public_ingress` | `cidr_blocks = ["0.0.0.0/0"]` in a `.tf` file triggers at least one finding with `"0.0.0.0/0"` in the description |
+| `test_detects_root_container` | `USER root` in a `Dockerfile` triggers at least one finding with `"root"` in the description |
 | `test_skips_non_iac_files` | `cidr = "0.0.0.0/0"` in `app.py` (not an IaC file) produces zero findings |
