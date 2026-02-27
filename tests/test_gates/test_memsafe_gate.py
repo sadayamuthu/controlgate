@@ -74,6 +74,16 @@ diff --git a/bridge.py b/bridge.py
 +data = ffi.cast("uint8_t *", ptr)
 """
 
+_CFFI_FALSE_POSITIVE_DIFF = """\
+diff --git a/audio.py b/audio.py
+--- /dev/null
++++ b/audio.py
+@@ -0,0 +1,3 @@
++# audio_ffi is a non-cffi library wrapper
++result = audio_ffi.cast("int", value)
++buf = mock_ffi.buffer(ptr, size)
+"""
+
 
 class TestMemSafeGate:
     def test_detects_eval_dynamic(self, gate):
@@ -120,3 +130,8 @@ class TestMemSafeGate:
         findings = gate.scan(diff_files)
         assert len(findings) > 0
         assert any("cffi" in f.description.lower() for f in findings)
+
+    def test_no_false_positive_non_cffi_ffi_variable(self, gate):
+        diff_files = parse_diff(_CFFI_FALSE_POSITIVE_DIFF)
+        findings = gate.scan(diff_files)
+        assert len(findings) == 0
