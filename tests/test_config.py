@@ -1,3 +1,5 @@
+"""Tests for ControlGate configuration loading and defaults."""
+
 # tests/test_config.py
 from controlgate.config import ControlGateConfig
 
