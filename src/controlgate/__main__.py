@@ -198,20 +198,30 @@ def scan_command(args: argparse.Namespace) -> int:
     print(f"📚 Loaded catalog: {catalog.count} controls", file=sys.stderr)
 
     # Get diff
-    if args.diff_file:
+    if args.mode == "full":
+        scan_root = Path(getattr(args, "path", None) or ".").resolve()
+        diff_files = _get_full_files(scan_root, config)
+        if not diff_files:
+            print("ℹ️  No files found to scan.", file=sys.stderr)
+            return 0
+        print(
+            f"📄 Full scan: {len(diff_files)} file(s) in {scan_root}...",
+            file=sys.stderr,
+        )
+    elif args.diff_file:
         diff_text = Path(args.diff_file).read_text(encoding="utf-8")
+        if not diff_text.strip():
+            print("ℹ️  No changes to scan.", file=sys.stderr)
+            return 0
+        diff_files = parse_diff(diff_text)
+        print(f"📄 Scanning {len(diff_files)} changed file(s)...", file=sys.stderr)
     else:
         diff_text = _get_diff(args.mode, args.target_branch)
-
-    if not diff_text.strip():
-        print("ℹ️  No changes to scan.", file=sys.stderr)
-        return 0
-
-    diff_files = parse_diff(diff_text)
-    print(
-        f"📄 Scanning {len(diff_files)} changed file(s)...",
-        file=sys.stderr,
-    )
+        if not diff_text.strip():
+            print("ℹ️  No changes to scan.", file=sys.stderr)
+            return 0
+        diff_files = parse_diff(diff_text)
+        print(f"📄 Scanning {len(diff_files)} changed file(s)...", file=sys.stderr)
 
     # Run engine
     engine = ControlGateEngine(config, catalog)
@@ -296,9 +306,9 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.add_argument(
         "--mode",
         type=str,
-        choices=["pre-commit", "pr"],
+        choices=["pre-commit", "pr", "full"],
         default="pre-commit",
-        help="Scan mode: pre-commit (staged) or pr (branch diff)",
+        help="Scan mode: pre-commit (staged), pr (branch diff), or full (entire repo)",
     )
     scan_parser.add_argument(
         "--target-branch",
@@ -317,6 +327,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Directory to write report files to",
+    )
+    scan_parser.add_argument(
+        "--path",
+        type=str,
+        default=None,
+        help="Root directory for full scan mode (default: current directory)",
     )
 
     # update-catalog subcommand

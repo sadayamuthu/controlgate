@@ -88,3 +88,46 @@ class TestGetFullFiles:
         with patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError):
             files = _get_full_files(tmp_path, config)
         assert not any(f.path.endswith("empty.py") for f in files)
+
+
+class TestFullScanMode:
+    def test_parser_accepts_full_mode(self):
+        from controlgate.__main__ import build_parser
+
+        parser = build_parser()
+        args = parser.parse_args(["scan", "--mode", "full"])
+        assert args.mode == "full"
+
+    def test_full_scan_finds_secrets(self, tmp_path):
+        """Full scan detects hardcoded secrets in a real file."""
+        from controlgate.__main__ import build_parser, scan_command
+
+        secret_file = tmp_path / "config.py"
+        secret_file.write_text('DB_PASSWORD = "super_secret_123"\n')
+        parser = build_parser()
+        args = parser.parse_args(["scan", "--mode", "full", "--format", "json"])
+        args.path = str(tmp_path)
+        exit_code = scan_command(args)
+        assert exit_code == 1  # BLOCK due to secrets
+
+    def test_full_scan_clean_directory(self, tmp_path):
+        """Full scan passes for directory with no security issues."""
+        from controlgate.__main__ import build_parser, scan_command
+
+        clean_file = tmp_path / "utils.py"
+        clean_file.write_text("import os\nenv = os.environ.get('KEY')\n")
+        parser = build_parser()
+        args = parser.parse_args(["scan", "--mode", "full", "--format", "json"])
+        args.path = str(tmp_path)
+        exit_code = scan_command(args)
+        assert exit_code == 0  # PASS
+
+    def test_full_scan_empty_directory(self, tmp_path):
+        """Full scan on empty directory returns 0."""
+        from controlgate.__main__ import build_parser, scan_command
+
+        parser = build_parser()
+        args = parser.parse_args(["scan", "--mode", "full", "--format", "json"])
+        args.path = str(tmp_path)
+        exit_code = scan_command(args)
+        assert exit_code == 0
