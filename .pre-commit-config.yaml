@@ -23,3 +23,12 @@ repos:
       - id: mypy
         additional_dependencies: [ types-PyYAML, pytest ]
         args: [ --config-file, pyproject.toml ]
+
+  - repo: local
+    hooks:
+      - id: bump-version
+        name: Auto-bump version if unchanged from main
+        entry: python hooks/bump_version.py
+        language: python
+        always_run: true
+        pass_filenames: false
