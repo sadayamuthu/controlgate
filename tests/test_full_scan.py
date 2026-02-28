@@ -1,5 +1,6 @@
 """Tests for full-repo scan mode."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from controlgate.__main__ import _get_full_files
@@ -88,6 +89,64 @@ class TestGetFullFiles:
         with patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError):
             files = _get_full_files(tmp_path, config)
         assert not any(f.path.endswith("empty.py") for f in files)
+
+    def test_handles_path_outside_root(self, tmp_path):
+        """Covers except ValueError branch (lines 89-90) when abs_path is not under root.
+
+        When git returns an absolute path outside of root, Path.relative_to raises
+        ValueError and the fallback uses str(abs_path) as rel_path.
+        """
+        outside_file = tmp_path.parent / "_cg_outside_coverage_test.py"
+        try:
+            outside_file.write_text("x = 1\n")
+            config = ControlGateConfig.load()
+            mock_result = MagicMock()
+            # Git returns an absolute path — root / absolute resolves to that absolute path,
+            # which is a sibling of tmp_path and therefore NOT under root, triggering ValueError.
+            mock_result.stdout = str(outside_file) + "\n"
+            with patch("controlgate.__main__.subprocess.run", return_value=mock_result):
+                files = _get_full_files(tmp_path, config)
+            assert any("_cg_outside_coverage_test.py" in f.path for f in files)
+        finally:
+            outside_file.unlink(missing_ok=True)
+
+    def test_skips_file_with_read_bytes_error(self, tmp_path):
+        """Covers except (OSError, PermissionError) on read_bytes (lines 113-114)."""
+        (tmp_path / "unreadable.py").write_text("x = 1")
+        config = ControlGateConfig.load()
+
+        original = Path.read_bytes
+
+        def mock_read_bytes(self):
+            if self.name == "unreadable.py":
+                raise PermissionError("Permission denied")
+            return original(self)
+
+        with (
+            patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError),
+            patch.object(Path, "read_bytes", mock_read_bytes),
+        ):
+            files = _get_full_files(tmp_path, config)
+        assert not any(f.path.endswith("unreadable.py") for f in files)
+
+    def test_skips_file_with_read_text_error(self, tmp_path):
+        """Covers except (OSError, PermissionError) on read_text (lines 119-120)."""
+        (tmp_path / "locked.py").write_text("x = 1")
+        config = ControlGateConfig.load()
+
+        original_text = Path.read_text
+
+        def mock_read_text(self, *args, **kwargs):
+            if self.name == "locked.py":
+                raise PermissionError("Permission denied")
+            return original_text(self, *args, **kwargs)
+
+        with (
+            patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError),
+            patch.object(Path, "read_text", mock_read_text),
+        ):
+            files = _get_full_files(tmp_path, config)
+        assert not any(f.path.endswith("locked.py") for f in files)
 
 
 class TestFullScanMode:

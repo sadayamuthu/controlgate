@@ -204,3 +204,43 @@ class TestInitCommand:
         with patch("builtins.input", side_effect=inputs):
             result = init_command(args)
         assert result == 0
+
+    def test_invalid_baseline_falls_back_to_moderate(self, tmp_path):
+        """Covers lines 466-467: unknown baseline triggers fallback to 'moderate'."""
+        from controlgate.init_command import init_command
+
+        args = argparse.Namespace(path=str(tmp_path), baseline=None, no_docs=True)
+        inputs = iter(["bogus_baseline", "n", "n", "n"])
+        with patch("builtins.input", side_effect=inputs):
+            init_command(args)
+        content = (tmp_path / ".controlgate.yml").read_text()
+        assert "baseline: moderate" in content
+
+    def test_prompt_yn_returns_default_on_empty_input(self, tmp_path):
+        """Covers line 425: _prompt_yn returns default when user presses Enter."""
+        from controlgate.init_command import init_command
+
+        args = argparse.Namespace(path=str(tmp_path), baseline="moderate", no_docs=True)
+        # Empty string for the three y/n CI prompts — all should use default (False)
+        inputs = iter(["moderate", "", "", ""])
+        with patch("builtins.input", side_effect=inputs):
+            result = init_command(args)
+        assert result == 0
+        assert not (tmp_path / ".github" / "workflows" / "controlgate.yml").exists()
+
+
+class TestPromptHelpers:
+    def test_prompt_without_default(self):
+        """Covers line 417: _prompt returns raw input when no default is set."""
+        from controlgate.init_command import _prompt
+
+        with patch("builtins.input", return_value="hello"):
+            result = _prompt("Enter something")
+        assert result == "hello"
+
+    def test_prompt_yn_true_default_on_empty(self):
+        """Covers line 425: _prompt_yn returns True default when input is empty."""
+        from controlgate.init_command import _prompt_yn
+
+        with patch("builtins.input", return_value=""):
+            assert _prompt_yn("Do it?", default=True) is True

@@ -302,6 +302,14 @@ new file mode 100644
             assert exit_code == 0
             mock_diff.assert_called_once()
 
+    def test_scan_else_branch_with_diff_content(self):
+        """Covers else branch lines 224-225: no --diff-file, non-full mode, non-empty _get_diff."""
+        parser = build_parser()
+        args = parser.parse_args(["scan", "--mode", "pre-commit", "--format", "json"])
+        with patch("controlgate.__main__._get_diff", return_value=_SAMPLE_DIFF):
+            exit_code = scan_command(args)
+        assert exit_code == 1  # BLOCK due to secrets
+
     def test_scan_default_formats_from_config(self):
         """When no --format given, uses config.report_formats."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".diff", delete=False) as f:
