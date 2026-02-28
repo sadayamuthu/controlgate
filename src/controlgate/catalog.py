@@ -17,6 +17,16 @@ GATE_CONTROL_MAP: dict[str, list[str]] = {
     "input_validation": ["SI-7", "SI-10", "SI-11", "SI-16"],
     "audit": ["AU-2", "AU-3", "AU-12"],
     "change_control": ["CM-3", "CM-4", "CM-5"],
+    "deps": ["RA-5", "SI-2", "SA-12"],
+    "api": ["SC-8", "AC-3", "SC-5", "SI-10"],
+    "privacy": ["PT-2", "PT-3", "SC-28"],
+    "resilience": ["CP-9", "CP-10", "SI-13"],
+    "incident": ["IR-4", "IR-6", "AU-6"],
+    "observability": ["SI-4", "AU-12"],
+    "memsafe": ["SI-16", "CM-7"],
+    "license": ["SA-4", "SR-3"],
+    "aiml": ["SI-10", "SC-28", "SR-3"],
+    "container": ["CM-6", "CM-7", "SC-7", "SC-39", "AC-6", "SI-7", "AU-12", "SA-10", "SR-3"],
 }
 
 

@@ -302,6 +302,14 @@ new file mode 100644
             assert exit_code == 0
             mock_diff.assert_called_once()
 
+    def test_scan_else_branch_with_diff_content(self):
+        """Covers else branch lines 224-225: no --diff-file, non-full mode, non-empty _get_diff."""
+        parser = build_parser()
+        args = parser.parse_args(["scan", "--mode", "pre-commit", "--format", "json"])
+        with patch("controlgate.__main__._get_diff", return_value=_SAMPLE_DIFF):
+            exit_code = scan_command(args)
+        assert exit_code == 1  # BLOCK due to secrets
+
     def test_scan_default_formats_from_config(self):
         """When no --format given, uses config.report_formats."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".diff", delete=False) as f:
@@ -372,3 +380,36 @@ class TestMain:
             with pytest.raises(SystemExit) as exc_info:
                 main()
             assert exc_info.value.code == 0
+
+
+class TestInitCommand:
+    def test_parser_has_init_command(self):
+        parser = build_parser()
+        args = parser.parse_args(["init"])
+        assert args.command == "init"
+
+    def test_init_defaults(self):
+        parser = build_parser()
+        args = parser.parse_args(["init"])
+        assert args.baseline is None
+        assert args.no_docs is False
+
+    def test_init_with_baseline(self):
+        parser = build_parser()
+        args = parser.parse_args(["init", "--baseline", "high"])
+        assert args.baseline == "high"
+
+    def test_init_with_no_docs(self):
+        parser = build_parser()
+        args = parser.parse_args(["init", "--no-docs"])
+        assert args.no_docs is True
+
+    def test_main_init_command(self, tmp_path):
+        inputs = iter(["moderate", "n", "n", "n"])
+        with (
+            patch("builtins.input", side_effect=inputs),
+            patch("sys.argv", ["controlgate", "init", "--path", str(tmp_path)]),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+        assert exc_info.value.code == 0

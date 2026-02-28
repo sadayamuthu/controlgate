@@ -18,9 +18,19 @@ _DEFAULT_CONFIG = {
         "iam": {"enabled": True, "action": "warn"},
         "sbom": {"enabled": True, "action": "warn"},
         "iac": {"enabled": True, "action": "block"},
-        "input": {"enabled": True, "action": "block"},
+        "input_validation": {"enabled": True, "action": "block"},
         "audit": {"enabled": True, "action": "warn"},
-        "change": {"enabled": True, "action": "warn"},
+        "change_control": {"enabled": True, "action": "warn"},
+        "deps": {"enabled": True, "action": "warn"},
+        "api": {"enabled": True, "action": "warn"},
+        "privacy": {"enabled": True, "action": "warn"},
+        "resilience": {"enabled": True, "action": "warn"},
+        "incident": {"enabled": True, "action": "warn"},
+        "observability": {"enabled": True, "action": "warn"},
+        "memsafe": {"enabled": True, "action": "warn"},
+        "license": {"enabled": True, "action": "warn"},
+        "aiml": {"enabled": True, "action": "warn"},
+        "container": {"enabled": True, "action": "warn"},
     },
     "thresholds": {
         "block_on": ["CRITICAL", "HIGH"],
@@ -35,6 +45,51 @@ _DEFAULT_CONFIG = {
         "format": ["json", "markdown"],
         "sarif": False,
         "output_dir": ".controlgate/reports",
+    },
+    "full_scan": {
+        "extensions": [
+            ".py",
+            ".js",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".go",
+            ".java",
+            ".rb",
+            ".rs",
+            ".c",
+            ".cpp",
+            ".h",
+            ".tf",
+            ".yaml",
+            ".yml",
+            ".json",
+            ".toml",
+            ".ini",
+            ".cfg",
+            ".sh",
+            ".bash",
+            ".zsh",
+            ".env",
+            ".xml",
+            ".sql",
+        ],
+        "skip_dirs": [
+            ".git",
+            "node_modules",
+            ".venv",
+            "venv",
+            "env",
+            "__pycache__",
+            "dist",
+            "build",
+            ".tox",
+            ".mypy_cache",
+            ".ruff_cache",
+            ".pytest_cache",
+            ".eggs",
+            "*.egg-info",
+        ],
     },
 }
 
@@ -63,6 +118,53 @@ class ControlGateConfig:
     report_formats: list[str] = field(default_factory=lambda: ["json", "markdown"])
     sarif_enabled: bool = False
     output_dir: str = ".controlgate/reports"
+    full_scan_extensions: list[str] = field(
+        default_factory=lambda: [
+            ".py",
+            ".js",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".go",
+            ".java",
+            ".rb",
+            ".rs",
+            ".c",
+            ".cpp",
+            ".h",
+            ".tf",
+            ".yaml",
+            ".yml",
+            ".json",
+            ".toml",
+            ".ini",
+            ".cfg",
+            ".sh",
+            ".bash",
+            ".zsh",
+            ".env",
+            ".xml",
+            ".sql",
+        ]
+    )
+    full_scan_skip_dirs: list[str] = field(
+        default_factory=lambda: [
+            ".git",
+            "node_modules",
+            ".venv",
+            "venv",
+            "env",
+            "__pycache__",
+            "dist",
+            "build",
+            ".tox",
+            ".mypy_cache",
+            ".ruff_cache",
+            ".pytest_cache",
+            ".eggs",
+            "*.egg-info",
+        ]
+    )
 
     @classmethod
     def load(cls, config_path: str | Path | None = None) -> ControlGateConfig:
@@ -123,6 +225,11 @@ class ControlGateConfig:
         cfg.report_formats = reporting.get("format", cfg.report_formats)
         cfg.sarif_enabled = reporting.get("sarif", cfg.sarif_enabled)
         cfg.output_dir = reporting.get("output_dir", cfg.output_dir)
+
+        # Full scan
+        full_scan = raw.get("full_scan", {})
+        cfg.full_scan_extensions = full_scan.get("extensions", cfg.full_scan_extensions)
+        cfg.full_scan_skip_dirs = full_scan.get("skip_dirs", cfg.full_scan_skip_dirs)
 
         return cfg
 

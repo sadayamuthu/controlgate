@@ -1,7 +1,7 @@
 """ControlGate CLI entry point.
 
 Usage:
-    controlgate scan [--config PATH] [--format json|markdown|sarif] [--baseline low|moderate|high]
+    controlgate scan [--config PATH] [--format json|markdown|sarif] [--baseline low|moderate|high|privacy|li-saas] [--gov]
     controlgate scan --diff-file PATH  # scan a saved diff file
     python -m controlgate scan [options]
 """
@@ -11,13 +11,15 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 from controlgate.catalog import CatalogIndex
 from controlgate.config import ControlGateConfig
 from controlgate.diff_parser import parse_diff
 from controlgate.engine import ControlGateEngine
-from controlgate.models import Action
+from controlgate.init_command import init_command
+from controlgate.models import Action, DiffFile, DiffHunk
 from controlgate.reporters.json_reporter import JSONReporter
 from controlgate.reporters.markdown_reporter import MarkdownReporter
 from controlgate.reporters.sarif_reporter import SARIFReporter
@@ -47,6 +49,90 @@ def _get_diff(mode: str, target_branch: str = "main") -> str:
     except FileNotFoundError:
         print("Error: git is not installed or not in PATH", file=sys.stderr)
         sys.exit(1)
+
+
+def _get_full_files(root: Path, config: ControlGateConfig) -> list[DiffFile]:
+    """Enumerate all project files for full-repo scan mode.
+
+    Tries ``git ls-files`` first (respects .gitignore). Falls back to
+    directory walk when not in a git repo.
+
+    Args:
+        root: Project root directory to scan.
+        config: ControlGate config (for extension/skip_dir filters).
+
+    Returns:
+        List of DiffFile objects with all content as added_lines.
+    """
+    root = root.resolve()
+    candidate_paths: list[Path] = []
+
+    # 1. Try git ls-files (honors .gitignore automatically)
+    try:
+        result = subprocess.run(
+            ["git", "ls-files"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=root,
+        )
+        candidate_paths = [root / p for p in result.stdout.strip().splitlines() if p.strip()]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fall back: walk directory
+        candidate_paths = [p for p in root.rglob("*") if p.is_file()]
+
+    diff_files: list[DiffFile] = []
+
+    for abs_path in candidate_paths:
+        try:
+            rel_path = str(abs_path.relative_to(root))
+        except ValueError:
+            rel_path = str(abs_path)
+
+        # Skip paths excluded by config glob patterns
+        if config.is_path_excluded(rel_path):
+            continue
+
+        # Skip any path component matching a pattern in skip_dirs
+        path_parts = Path(rel_path).parts
+        if any(
+            any(fnmatch(part, pattern) for pattern in config.full_scan_skip_dirs)
+            for part in path_parts
+        ):
+            continue
+
+        # Filter by extension allowlist (empty list = allow all)
+        if config.full_scan_extensions and abs_path.suffix not in config.full_scan_extensions:
+            continue
+
+        # Skip binary files (null-byte heuristic)
+        try:
+            sample = abs_path.read_bytes()[:8192]
+            if b"\x00" in sample:
+                continue
+        except (OSError, PermissionError):
+            continue
+
+        # Read text content
+        try:
+            content = abs_path.read_text(encoding="utf-8", errors="ignore")
+        except (OSError, PermissionError):
+            continue
+
+        lines = content.splitlines()
+        if not lines:
+            continue
+
+        hunk = DiffHunk(
+            start_line=1,
+            line_count=len(lines),
+            added_lines=list(enumerate(lines, start=1)),
+        )
+        df = DiffFile(path=rel_path)
+        df.hunks = [hunk]
+        diff_files.append(df)
+
+    return diff_files
 
 
 def _resolve_catalog_path(config: ControlGateConfig) -> Path:
@@ -113,20 +199,30 @@ def scan_command(args: argparse.Namespace) -> int:
     print(f"📚 Loaded catalog: {catalog.count} controls", file=sys.stderr)
 
     # Get diff
-    if args.diff_file:
+    if args.mode == "full":
+        scan_root = Path(getattr(args, "path", None) or ".").resolve()
+        diff_files = _get_full_files(scan_root, config)
+        if not diff_files:
+            print("ℹ️  No files found to scan.", file=sys.stderr)
+            return 0
+        print(
+            f"📄 Full scan: {len(diff_files)} file(s) in {scan_root}...",
+            file=sys.stderr,
+        )
+    elif args.diff_file:
         diff_text = Path(args.diff_file).read_text(encoding="utf-8")
+        if not diff_text.strip():
+            print("ℹ️  No changes to scan.", file=sys.stderr)
+            return 0
+        diff_files = parse_diff(diff_text)
+        print(f"📄 Scanning {len(diff_files)} changed file(s)...", file=sys.stderr)
     else:
         diff_text = _get_diff(args.mode, args.target_branch)
-
-    if not diff_text.strip():
-        print("ℹ️  No changes to scan.", file=sys.stderr)
-        return 0
-
-    diff_files = parse_diff(diff_text)
-    print(
-        f"📄 Scanning {len(diff_files)} changed file(s)...",
-        file=sys.stderr,
-    )
+        if not diff_text.strip():
+            print("ℹ️  No changes to scan.", file=sys.stderr)
+            return 0
+        diff_files = parse_diff(diff_text)
+        print(f"📄 Scanning {len(diff_files)} changed file(s)...", file=sys.stderr)
 
     # Run engine
     engine = ControlGateEngine(config, catalog)
@@ -211,9 +307,9 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.add_argument(
         "--mode",
         type=str,
-        choices=["pre-commit", "pr"],
+        choices=["pre-commit", "pr", "full"],
         default="pre-commit",
-        help="Scan mode: pre-commit (staged) or pr (branch diff)",
+        help="Scan mode: pre-commit (staged), pr (branch diff), or full (entire repo)",
     )
     scan_parser.add_argument(
         "--target-branch",
@@ -233,6 +329,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Directory to write report files to",
     )
+    scan_parser.add_argument(
+        "--path",
+        type=str,
+        default=None,
+        help="Root directory for full scan mode (default: current directory)",
+    )
 
     # update-catalog subcommand
     subparsers.add_parser(
@@ -244,6 +346,31 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "catalog-info",
         help="Show information about the current catalog",
+    )
+
+    # init subcommand
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Bootstrap ControlGate config files for this project",
+    )
+    init_parser.add_argument(
+        "--path",
+        type=str,
+        default=None,
+        help="Target directory to initialize (default: current directory)",
+    )
+    init_parser.add_argument(
+        "--baseline",
+        type=str,
+        choices=["low", "moderate", "high", "privacy", "li-saas"],
+        default=None,
+        help="Pre-select the NIST/FedRAMP baseline level",
+    )
+    init_parser.add_argument(
+        "--no-docs",
+        action="store_true",
+        default=False,
+        help="Skip generating CONTROLGATE.md",
     )
 
     return parser
@@ -295,6 +422,8 @@ def main() -> None:
         sys.exit(update_catalog_command())
     elif args.command == "catalog-info":
         sys.exit(catalog_info_command())
+    elif args.command == "init":
+        sys.exit(init_command(args))
     else:
         parser.print_help()
         sys.exit(0)

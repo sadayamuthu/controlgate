@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "controlgate"
-version = "0.1.7"
+version = "0.2.0"
 description = "NIST RMF Cloud Security Hardening — Pre-Commit & Pre-Merge Compliance Gate"
 readme = "README.md"
 license = {text = "MIT"}
@@ -53,9 +53,11 @@ controlgate = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src", "hooks"]
 
 [tool.coverage.run]
-source = ["controlgate"]
+source = ["controlgate", "hooks"]
+omit = ["hooks/pre_commit.py"]
 
 [tool.coverage.report]
 fail_under = 100
@@ -82,3 +84,4 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 check_untyped_defs = true
+ignore_missing_imports = true
