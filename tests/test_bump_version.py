@@ -1,18 +1,12 @@
 """Tests for hooks/bump_version.py"""
 
 import subprocess
-import sys
-from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+import bump_version
 import pytest
 
-# bump_version.py lives in hooks/, not src/ — import it directly
-sys.path.insert(0, str(Path(__file__).parent.parent / "hooks"))
-import bump_version  # noqa: E402
-
 PYPROJECT_SAME = '[project]\nname = "controlgate"\nversion = "0.1.7"\n'
-PYPROJECT_MAIN = '[project]\nname = "controlgate"\nversion = "0.1.7"\n'
 PYPROJECT_HIGHER = '[project]\nname = "controlgate"\nversion = "0.2.0"\n'
 
 
@@ -45,7 +39,7 @@ class TestWriteVersion:
 
 class TestGetMainVersion:
     def test_returns_tuple_when_origin_available(self):
-        mock_result = type("R", (), {"returncode": 0, "stdout": PYPROJECT_MAIN})()
+        mock_result = MagicMock(stdout=PYPROJECT_SAME)
         with patch("subprocess.run", return_value=mock_result):
             assert bump_version.get_main_version() == (0, 1, 7)
 
@@ -60,13 +54,14 @@ class TestGetMainVersion:
         with patch("subprocess.run", side_effect=FileNotFoundError):
             result = bump_version.get_main_version()
         assert result is None
+        assert "warning" in capsys.readouterr().out.lower()
 
 
 class TestMain:
     def test_bumps_and_stages_when_versions_match(self, tmp_path):
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(PYPROJECT_SAME)
-        mock_result = type("R", (), {"returncode": 0, "stdout": PYPROJECT_MAIN})()
+        mock_result = MagicMock(stdout=PYPROJECT_SAME)
         with (
             patch("bump_version.PYPROJECT_PATH", pyproject),
             patch("subprocess.run", return_value=mock_result),
@@ -78,14 +73,14 @@ class TestMain:
     def test_skips_when_versions_differ(self, tmp_path):
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(PYPROJECT_HIGHER)
-        mock_result = type("R", (), {"returncode": 0, "stdout": PYPROJECT_MAIN})()
+        mock_result = MagicMock(stdout=PYPROJECT_SAME)
         with (
             patch("bump_version.PYPROJECT_PATH", pyproject),
             patch("subprocess.run", return_value=mock_result),
         ):
             exit_code = bump_version.main()
         assert exit_code == 0
-        assert 'version = "0.2.0"' in pyproject.read_text()  # unchanged
+        assert pyproject.read_text() == PYPROJECT_HIGHER  # file must be byte-for-byte unchanged
 
     def test_passes_when_origin_unavailable(self, tmp_path):
         pyproject = tmp_path / "pyproject.toml"
@@ -98,3 +93,20 @@ class TestMain:
         assert exit_code == 0
         # Version unchanged since we couldn't compare
         assert 'version = "0.1.7"' in pyproject.read_text()
+
+    def test_returns_one_when_git_add_fails(self, tmp_path):
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(PYPROJECT_SAME)
+        mock_result = type("R", (), {"returncode": 0, "stdout": PYPROJECT_SAME})()
+
+        def side_effects(cmd, **kwargs):
+            if cmd[0:2] == ["git", "show"]:
+                return mock_result
+            raise subprocess.CalledProcessError(1, cmd)
+
+        with (
+            patch("bump_version.PYPROJECT_PATH", pyproject),
+            patch("subprocess.run", side_effect=side_effects),
+        ):
+            exit_code = bump_version.main()
+        assert exit_code == 1

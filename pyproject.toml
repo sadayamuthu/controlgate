@@ -53,9 +53,11 @@ controlgate = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src", "hooks"]
 
 [tool.coverage.run]
-source = ["controlgate"]
+source = ["controlgate", "hooks"]
+omit = ["hooks/pre_commit.py"]
 
 [tool.coverage.report]
 fail_under = 100

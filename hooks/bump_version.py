@@ -35,7 +35,7 @@ def bump_minor(version: tuple[int, int, int]) -> tuple[int, int, int]:
 def write_version(content: str, version: tuple[int, int, int]) -> str:
     """Return content with version replaced."""
     new = f"{version[0]}.{version[1]}.{version[2]}"
-    return _VERSION_RE.sub(f'version = "{new}"', content)
+    return _VERSION_RE.sub(f'version = "{new}"', content, count=1)
 
 
 def get_main_version() -> tuple[int, int, int] | None:
@@ -71,7 +71,11 @@ def main() -> int:
     new_content = write_version(content, new_ver)
     PYPROJECT_PATH.write_text(new_content, encoding="utf-8")
 
-    subprocess.run(["git", "add", str(PYPROJECT_PATH)], check=True)
+    try:
+        subprocess.run(["git", "add", str(PYPROJECT_PATH)], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"bump-version: ERROR: git add failed: {e}", flush=True)
+        return 1
 
     old_str = f"{current[0]}.{current[1]}.{current[2]}"
     new_str = f"{new_ver[0]}.{new_ver[1]}.{new_ver[2]}"
