@@ -161,6 +161,8 @@ class ControlGateConfig:
             ".mypy_cache",
             ".ruff_cache",
             ".pytest_cache",
+            ".eggs",
+            "*.egg-info",
         ]
     )
 
