@@ -18,6 +18,7 @@ from controlgate.catalog import CatalogIndex
 from controlgate.config import ControlGateConfig
 from controlgate.diff_parser import parse_diff
 from controlgate.engine import ControlGateEngine
+from controlgate.init_command import init_command
 from controlgate.models import Action, DiffFile, DiffHunk
 from controlgate.reporters.json_reporter import JSONReporter
 from controlgate.reporters.markdown_reporter import MarkdownReporter
@@ -347,6 +348,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show information about the current catalog",
     )
 
+    # init subcommand
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Bootstrap ControlGate config files for this project",
+    )
+    init_parser.add_argument(
+        "--path",
+        type=str,
+        default=None,
+        help="Target directory to initialize (default: current directory)",
+    )
+    init_parser.add_argument(
+        "--baseline",
+        type=str,
+        choices=["low", "moderate", "high", "privacy", "li-saas"],
+        default=None,
+        help="Pre-select the NIST/FedRAMP baseline level",
+    )
+    init_parser.add_argument(
+        "--no-docs",
+        action="store_true",
+        default=False,
+        help="Skip generating CONTROLGATE.md",
+    )
+
     return parser
 
 
@@ -396,6 +422,8 @@ def main() -> None:
         sys.exit(update_catalog_command())
     elif args.command == "catalog-info":
         sys.exit(catalog_info_command())
+    elif args.command == "init":
+        sys.exit(init_command(args))
     else:
         parser.print_help()
         sys.exit(0)
