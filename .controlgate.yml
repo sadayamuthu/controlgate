@@ -4,14 +4,24 @@ gov: false                      # If true, evaluates against FedRAMP baselines i
 catalog: baseline/nist80053r5_full_catalog_enriched.json
 
 gates:
-  secrets:    { enabled: true,  action: block }
-  crypto:     { enabled: true,  action: block }
-  iam:        { enabled: true,  action: warn  }
-  sbom:       { enabled: true,  action: warn  }
-  iac:        { enabled: true,  action: block }
-  input:      { enabled: true,  action: block }
-  audit:      { enabled: true,  action: warn  }
-  change:     { enabled: true,  action: warn  }
+  secrets:             { enabled: true,  action: block }
+  crypto:              { enabled: true,  action: block }
+  iam:                 { enabled: true,  action: warn  }
+  sbom:                { enabled: true,  action: warn  }
+  iac:                 { enabled: true,  action: block }
+  input_validation:    { enabled: true,  action: block }
+  audit:               { enabled: true,  action: warn  }
+  change_control:      { enabled: true,  action: warn  }
+  deps:                { enabled: true,  action: warn  }
+  api:                 { enabled: true,  action: warn  }
+  privacy:             { enabled: true,  action: warn  }
+  resilience:          { enabled: true,  action: warn  }
+  incident:            { enabled: true,  action: warn  }
+  observability:       { enabled: true,  action: warn  }
+  memsafe:             { enabled: true,  action: warn  }
+  license:             { enabled: true,  action: warn  }
+  aiml:                { enabled: true,  action: warn  }
+  container:           { enabled: true,  action: warn  }
 
 thresholds:
   block_on:   [CRITICAL, HIGH]  # Block if finding severity matches
