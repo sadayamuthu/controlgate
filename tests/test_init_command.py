@@ -148,6 +148,42 @@ class TestInitCommand:
             init_command(args)
         assert not (tmp_path / ".github" / "workflows" / "controlgate.yml").exists()
 
+    def test_creates_gitlab_ci_when_confirmed(self, tmp_path):
+        from controlgate.init_command import init_command
+
+        args = argparse.Namespace(path=str(tmp_path), baseline="moderate", no_docs=False)
+        inputs = iter(["moderate", "n", "y", "n"])  # github=n, gitlab=y, bitbucket=n
+        with patch("builtins.input", side_effect=inputs):
+            init_command(args)
+        assert (tmp_path / ".gitlab-ci.yml").exists()
+
+    def test_skips_gitlab_ci_when_denied(self, tmp_path):
+        from controlgate.init_command import init_command
+
+        args = argparse.Namespace(path=str(tmp_path), baseline="moderate", no_docs=False)
+        inputs = iter(["moderate", "n", "n", "n"])
+        with patch("builtins.input", side_effect=inputs):
+            init_command(args)
+        assert not (tmp_path / ".gitlab-ci.yml").exists()
+
+    def test_creates_bitbucket_pipelines_when_confirmed(self, tmp_path):
+        from controlgate.init_command import init_command
+
+        args = argparse.Namespace(path=str(tmp_path), baseline="moderate", no_docs=False)
+        inputs = iter(["moderate", "n", "n", "y"])  # github=n, gitlab=n, bitbucket=y
+        with patch("builtins.input", side_effect=inputs):
+            init_command(args)
+        assert (tmp_path / "bitbucket-pipelines.yml").exists()
+
+    def test_skips_bitbucket_pipelines_when_denied(self, tmp_path):
+        from controlgate.init_command import init_command
+
+        args = argparse.Namespace(path=str(tmp_path), baseline="moderate", no_docs=False)
+        inputs = iter(["moderate", "n", "n", "n"])
+        with patch("builtins.input", side_effect=inputs):
+            init_command(args)
+        assert not (tmp_path / "bitbucket-pipelines.yml").exists()
+
     def test_overwrite_prompt_on_existing_file(self, tmp_path):
         from controlgate.init_command import init_command
 

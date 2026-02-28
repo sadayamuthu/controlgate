@@ -20,6 +20,9 @@ baseline: {baseline}
 # Set to true to evaluate against FedRAMP baselines instead of NIST
 gov: false
 
+# NIST control catalog path (auto-managed; change only if self-hosting)
+# catalog: baseline/nist80053r5_full_catalog_enriched.json
+
 # ---------------------------------------------------------------------------
 # Security Gates — 18 gates mapped to NIST SP 800-53 Rev. 5 controls
 # action: block | warn | disabled
