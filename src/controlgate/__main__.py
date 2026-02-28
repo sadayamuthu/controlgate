@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 from controlgate.catalog import CatalogIndex
@@ -91,9 +92,12 @@ def _get_full_files(root: Path, config: ControlGateConfig) -> list[DiffFile]:
         if config.is_path_excluded(rel_path):
             continue
 
-        # Skip any path component that is in skip_dirs
+        # Skip any path component matching a pattern in skip_dirs
         path_parts = Path(rel_path).parts
-        if any(part in config.full_scan_skip_dirs for part in path_parts):
+        if any(
+            any(fnmatch(part, pattern) for pattern in config.full_scan_skip_dirs)
+            for part in path_parts
+        ):
             continue
 
         # Filter by extension allowlist (empty list = allow all)

@@ -62,13 +62,25 @@ class TestGetFullFiles:
 
     def test_uses_git_ls_files_when_available(self, tmp_path):
         (tmp_path / "tracked.py").write_text("x = 1")
+        (tmp_path / "untracked_secret.py").write_text("password = 'hunter2'")
         config = ControlGateConfig.load()
         mock_result = MagicMock()
-        mock_result.stdout = "tracked.py\n"
+        mock_result.stdout = "tracked.py\n"  # only tracked.py listed
         mock_result.returncode = 0
         with patch("controlgate.__main__.subprocess.run", return_value=mock_result):
             files = _get_full_files(tmp_path, config)
         assert any(f.path.endswith("tracked.py") for f in files)
+        assert not any(f.path.endswith("untracked_secret.py") for f in files)
+
+    def test_skips_glob_skip_dirs(self, tmp_path):
+        (tmp_path / "app.py").write_text("x = 1")
+        egg_dir = tmp_path / "controlgate.egg-info"
+        egg_dir.mkdir()
+        (egg_dir / "PKG-INFO").write_text("[metadata]")
+        config = ControlGateConfig.load()
+        with patch("controlgate.__main__.subprocess.run", side_effect=FileNotFoundError):
+            files = _get_full_files(tmp_path, config)
+        assert not any("egg-info" in f.path for f in files)
 
     def test_skips_empty_files(self, tmp_path):
         (tmp_path / "empty.py").write_text("")
