@@ -1,7 +1,7 @@
 """ControlGate CLI entry point.
 
 Usage:
-    controlgate scan [--config PATH] [--format json|markdown|sarif] [--baseline low|moderate|high]
+    controlgate scan [--config PATH] [--format json|markdown|sarif] [--baseline low|moderate|high|privacy|li-saas] [--gov]
     controlgate scan --diff-file PATH  # scan a saved diff file
     python -m controlgate scan [options]
 """
@@ -17,7 +17,7 @@ from controlgate.catalog import CatalogIndex
 from controlgate.config import ControlGateConfig
 from controlgate.diff_parser import parse_diff
 from controlgate.engine import ControlGateEngine
-from controlgate.models import Action
+from controlgate.models import Action, DiffFile, DiffHunk
 from controlgate.reporters.json_reporter import JSONReporter
 from controlgate.reporters.markdown_reporter import MarkdownReporter
 from controlgate.reporters.sarif_reporter import SARIFReporter
@@ -47,6 +47,87 @@ def _get_diff(mode: str, target_branch: str = "main") -> str:
     except FileNotFoundError:
         print("Error: git is not installed or not in PATH", file=sys.stderr)
         sys.exit(1)
+
+
+def _get_full_files(root: Path, config: ControlGateConfig) -> list[DiffFile]:
+    """Enumerate all project files for full-repo scan mode.
+
+    Tries ``git ls-files`` first (respects .gitignore). Falls back to
+    directory walk when not in a git repo.
+
+    Args:
+        root: Project root directory to scan.
+        config: ControlGate config (for extension/skip_dir filters).
+
+    Returns:
+        List of DiffFile objects with all content as added_lines.
+    """
+    root = root.resolve()
+    candidate_paths: list[Path] = []
+
+    # 1. Try git ls-files (honors .gitignore automatically)
+    try:
+        result = subprocess.run(
+            ["git", "ls-files"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=root,
+        )
+        candidate_paths = [root / p for p in result.stdout.strip().splitlines() if p.strip()]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fall back: walk directory
+        candidate_paths = [p for p in root.rglob("*") if p.is_file()]
+
+    diff_files: list[DiffFile] = []
+
+    for abs_path in candidate_paths:
+        try:
+            rel_path = str(abs_path.relative_to(root))
+        except ValueError:
+            rel_path = str(abs_path)
+
+        # Skip paths excluded by config glob patterns
+        if config.is_path_excluded(rel_path):
+            continue
+
+        # Skip any path component that is in skip_dirs
+        path_parts = Path(rel_path).parts
+        if any(part in config.full_scan_skip_dirs for part in path_parts):
+            continue
+
+        # Filter by extension allowlist (empty list = allow all)
+        if config.full_scan_extensions and abs_path.suffix not in config.full_scan_extensions:
+            continue
+
+        # Skip binary files (null-byte heuristic)
+        try:
+            sample = abs_path.read_bytes()[:8192]
+            if b"\x00" in sample:
+                continue
+        except (OSError, PermissionError):
+            continue
+
+        # Read text content
+        try:
+            content = abs_path.read_text(encoding="utf-8", errors="ignore")
+        except (OSError, PermissionError):
+            continue
+
+        lines = content.splitlines()
+        if not lines:
+            continue
+
+        hunk = DiffHunk(
+            start_line=1,
+            line_count=len(lines),
+            added_lines=list(enumerate(lines, start=1)),
+        )
+        df = DiffFile(path=rel_path)
+        df.hunks = [hunk]
+        diff_files.append(df)
+
+    return diff_files
 
 
 def _resolve_catalog_path(config: ControlGateConfig) -> Path:
