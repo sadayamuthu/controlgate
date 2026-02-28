@@ -80,7 +80,10 @@ class TestDepsGate:
         diff_files = parse_diff(_NO_VERIFY_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) > 0
-        assert any("no-verify" in f.description.lower() or "integrity" in f.description.lower() for f in findings)
+        assert any(
+            "no-verify" in f.description.lower() or "integrity" in f.description.lower()
+            for f in findings
+        )
 
     def test_detects_ignore_scripts(self, gate):
         diff_files = parse_diff(_IGNORE_SCRIPTS_DIFF)

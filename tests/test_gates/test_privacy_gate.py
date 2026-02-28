@@ -57,7 +57,9 @@ class TestPrivacyGate:
         diff_files = parse_diff(_PII_IN_LOG_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) > 0
-        assert any("pii" in f.description.lower() or "log" in f.description.lower() for f in findings)
+        assert any(
+            "pii" in f.description.lower() or "log" in f.description.lower() for f in findings
+        )
 
     def test_detects_serialize_all_fields(self, gate):
         diff_files = parse_diff(_SERIALIZE_ALL_DIFF)

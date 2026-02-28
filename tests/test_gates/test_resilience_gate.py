@@ -61,7 +61,10 @@ class TestResilienceGate:
         diff_files = parse_diff(_DELETION_PROTECTION_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) > 0
-        assert any("deletion_protection" in f.description.lower() or "backup" in f.description.lower() for f in findings)
+        assert any(
+            "deletion_protection" in f.description.lower() or "backup" in f.description.lower()
+            for f in findings
+        )
 
     def test_detects_skip_final_snapshot(self, gate):
         diff_files = parse_diff(_SKIP_SNAPSHOT_DIFF)

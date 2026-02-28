@@ -75,7 +75,10 @@ class TestIncidentGate:
         diff_files = parse_diff(_SILENT_EXCEPT_DIFF)
         findings = gate.scan(diff_files)
         assert len(findings) > 0
-        assert any("exception" in f.description.lower() or "silent" in f.description.lower() for f in findings)
+        assert any(
+            "exception" in f.description.lower() or "silent" in f.description.lower()
+            for f in findings
+        )
 
     def test_detects_empty_catch_js(self, gate):
         diff_files = parse_diff(_EMPTY_CATCH_JS_DIFF)
