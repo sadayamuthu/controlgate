@@ -1,12 +1,29 @@
-# 🛡️ ControlGate
+<div align="center">
 
-[![CI](https://github.com/sadayamuthu/controlgate/actions/workflows/ci.yml/badge.svg)](https://github.com/sadayamuthu/controlgate/actions/workflows/ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+# ControlGate
 
-**NIST RMF & FedRAMP Cloud Security Hardening — Pre-Commit & Pre-Merge Compliance Gate**
+<h3>NIST RMF & FedRAMP Cloud Security Hardening</h3>
+
+<p>Pre-Commit & Pre-Merge Compliance Gate</p>
+
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat-square)](https://github.com/sadayamuthu/controlgate/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue?style=flat-square)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![PyPI](https://img.shields.io/badge/PyPI-controlgate-orange?style=flat-square)](https://pypi.org/project/controlgate/)
+
+---
+
+[Quick Start](#quick-start) · [How It Works](#how-it-works) · [18 Security Gates](#the-18-security-gates) · [Installation](#installation) · [Configuration](#configuration) · [CLI Usage](#cli-usage)
+
+</div>
+
+---
+
+## What is ControlGate?
 
 ControlGate is an AI-powered agent skill that scans your code changes against the **NIST SP 800-53 Rev. 5** (and **FedRAMP**) security framework before every commit and merge. It maps findings directly to specific NIST control IDs, providing traceable compliance evidence and actionable remediation guidance.
+
+---
 
 ## Quick Start
 
@@ -30,6 +47,8 @@ controlgate scan --gov --baseline moderate --mode pre-commit --format markdown
 controlgate scan --mode pr --target-branch main --format json markdown
 ```
 
+---
+
 ## How It Works
 
 ```
@@ -41,31 +60,35 @@ ControlGate intercepts the diff
        ↓
 18 Security Gates scan against 370 non-negotiable NIST controls
        ↓
-Verdict: BLOCK 🚫 / WARN ⚠️ / PASS ✅
+Verdict: BLOCK / WARN / PASS
 ```
+
+---
 
 ## The 18 Security Gates
 
 | # | Gate | NIST Families | What It Catches |
 |---|------|---------------|-----------------|
-| 1 | 🔑 Secrets | IA-5, SC-12, SC-28 | Hardcoded creds, API keys, private keys |
-| 2 | 🔒 Crypto | SC-8, SC-13, SC-17 | Weak algorithms, missing TLS, `ssl_verify=False` |
-| 3 | 🛡️ IAM | AC-3, AC-5, AC-6 | Wildcard IAM, missing auth, overprivileged roles |
-| 4 | 📦 Supply Chain | SR-3, SR-11, SA-10 | Unpinned deps, missing lockfiles, build tampering |
-| 5 | 🏗️ IaC | CM-2, CM-6, SC-7 | Public buckets, `0.0.0.0/0` rules, root containers |
-| 6 | ✅ Input Validation | SI-10, SI-11 | SQL injection, `eval()`, exposed stack traces |
-| 7 | 📋 Audit | AU-2, AU-3, AU-12 | Missing security logging, PII in logs |
-| 8 | 🔄 Change Control | CM-3, CM-4, CM-5 | Unauthorized config changes, missing CODEOWNERS |
-| 9 | 🧩 Dependencies | SA-12, RA-5, SI-2 | Vulnerable packages, missing lockfiles |
-| 10 | 🌐 API Security | SC-8, AC-3, SI-10 | Unauthenticated endpoints, missing rate limiting |
-| 11 | 🔐 Privacy | AR-2, DM-1, IP-1 | PII exposure, missing data classification |
-| 12 | 🔁 Resilience | CP-2, CP-10, SC-5 | Missing retry logic, no circuit breakers |
-| 13 | 🚨 Incident Response | IR-2, IR-4, IR-6 | Missing error handlers, no alerting integration |
-| 14 | 👁️ Observability | AU-6, SI-4, CA-7 | Missing health checks, no structured logging |
-| 15 | 🧠 Memory Safety | SI-16, SA-11, SA-15 | Buffer overflows, unsafe memory operations |
-| 16 | ⚖️ License Compliance | SA-4, SR-3 | GPL contamination, unlicensed dependencies |
-| 17 | 🤖 AI/ML Security | SA-11, SI-7, AC-3 | Untrusted model sources, prompt injection risk |
-| 18 | 🐳 Container Security | CM-6, AC-6, SC-7 | Root containers, privileged mode, `latest` tags |
+| 1 | Secrets | IA-5, SC-12, SC-28 | Hardcoded creds, API keys, private keys |
+| 2 | Crypto | SC-8, SC-13, SC-17 | Weak algorithms, missing TLS, `ssl_verify=False` |
+| 3 | IAM | AC-3, AC-5, AC-6 | Wildcard IAM, missing auth, overprivileged roles |
+| 4 | Supply Chain | SR-3, SR-11, SA-10 | Unpinned deps, missing lockfiles, build tampering |
+| 5 | IaC | CM-2, CM-6, SC-7 | Public buckets, `0.0.0.0/0` rules, root containers |
+| 6 | Input Validation | SI-10, SI-11 | SQL injection, `eval()`, exposed stack traces |
+| 7 | Audit | AU-2, AU-3, AU-12 | Missing security logging, PII in logs |
+| 8 | Change Control | CM-3, CM-4, CM-5 | Unauthorized config changes, missing CODEOWNERS |
+| 9 | Dependencies | SA-12, RA-5, SI-2 | Vulnerable packages, missing lockfiles |
+| 10 | API Security | SC-8, AC-3, SI-10 | Unauthenticated endpoints, missing rate limiting |
+| 11 | Privacy | AR-2, DM-1, IP-1 | PII exposure, missing data classification |
+| 12 | Resilience | CP-2, CP-10, SC-5 | Missing retry logic, no circuit breakers |
+| 13 | Incident Response | IR-2, IR-4, IR-6 | Missing error handlers, no alerting integration |
+| 14 | Observability | AU-6, SI-4, CA-7 | Missing health checks, no structured logging |
+| 15 | Memory Safety | SI-16, SA-11, SA-15 | Buffer overflows, unsafe memory operations |
+| 16 | License Compliance | SA-4, SR-3 | GPL contamination, unlicensed dependencies |
+| 17 | AI/ML Security | SA-11, SI-7, AC-3 | Untrusted model sources, prompt injection risk |
+| 18 | Container Security | CM-6, AC-6, SC-7 | Root containers, privileged mode, `latest` tags |
+
+---
 
 ## Installation
 
@@ -95,6 +118,8 @@ repos:
 ### As a GitHub Action
 
 Copy [`hooks/github_action.yml`](hooks/github_action.yml) to `.github/workflows/controlgate.yml` in your repo.
+
+---
 
 ## Configuration
 
@@ -137,6 +162,8 @@ full_scan:
   skip_dirs: [.git, node_modules, .venv, dist, build]
 ```
 
+---
+
 ## CLI Usage
 
 ```bash
@@ -168,6 +195,8 @@ controlgate update-catalog
 controlgate catalog-info
 ```
 
+---
+
 ## Output Formats
 
 | Format | Use Case |
@@ -175,6 +204,8 @@ controlgate catalog-info
 | `markdown` | PR comments, terminal output |
 | `json` | Programmatic consumption, dashboards |
 | `sarif` | GitHub Code Scanning integration |
+
+---
 
 ## Development
 
@@ -189,6 +220,8 @@ make check          # Run all checks (lint + typecheck + test)
 make build          # Build distribution packages
 ```
 
+---
+
 ## AI Agent Skills
 
 ControlGate provides native skills for popular AI coding assistants. These skills teach the agents how to proactively scan your code for NIST 800-53 R5 compliance and automatically apply remediations.
@@ -200,18 +233,37 @@ The agent prompts and workflows are located in the [`skills/`](skills/) director
 - **Claude Code**: System prompt instructions in `skills/claude_code/.clauderules`
 - **CodeEx**: Integration prompts in `skills/codeex/instructions.md`
 
+---
+
 ## Test Suite
 
 To validate the capabilities of ControlGate, we maintain a standalone test suite at [sadayamuthu/controlgate-test-suite](https://github.com/sadayamuthu/controlgate-test-suite).
 This suite contains intentionally vulnerable projects spanning multiple languages and frameworks, specifically designed to trigger each of the 18 Security Gates. It is automatically executed in the CI pipeline to ensure zero regression in detection capabilities.
 
+---
+
 ## Data Source
 
 Powered by the [NIST Cloud Security Baseline (NCSB)](https://github.com/sadayamuthu/nist-cloud-security-baseline) enriched catalog:
+
 - **1,189** controls across 20 families
 - **370** non-negotiable at Moderate baseline
 - **247** code-relevant controls mapped to automated scanning rules
 
+---
+
 ## License
 
 MIT
+
+---
+
+<div align="center">
+
+**ControlGate is an open-source NIST RMF & FedRAMP compliance tool**
+
+ControlGate is managed by [OpenAstra](https://openastra.org).
+
+[PyPI](https://pypi.org/project/controlgate/) · [GitHub](https://github.com/sadayamuthu/controlgate) · [Test Suite](https://github.com/sadayamuthu/controlgate-test-suite)
+
+</div>
