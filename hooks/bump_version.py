@@ -2,7 +2,8 @@
 """Pre-commit hook: auto-bump minor version if unchanged from origin/main.
 
 When the version in pyproject.toml matches origin/main, bumps the minor
-segment (e.g. 0.1.7 → 0.2.0) and stages pyproject.toml so the bump is
+segment (e.g. 0.1.7 → 0.2.0), updates ``__version__`` in
+src/controlgate/__init__.py to match, and stages both files so the bump is
 included in the current commit.
 """
 
@@ -14,7 +15,9 @@ import sys
 from pathlib import Path
 
 PYPROJECT_PATH = Path(__file__).parent.parent / "pyproject.toml"
+INIT_PATH = Path(__file__).parent.parent / "src" / "controlgate" / "__init__.py"
 _VERSION_RE = re.compile(r'^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"', re.MULTILINE)
+_DUNDER_VERSION_RE = re.compile(r'^__version__\s*=\s*"[^"]*"', re.MULTILINE)
 
 
 def parse_version(content: str) -> tuple[int, int, int]:
@@ -36,6 +39,12 @@ def write_version(content: str, version: tuple[int, int, int]) -> str:
     """Return content with version replaced."""
     new = f"{version[0]}.{version[1]}.{version[2]}"
     return _VERSION_RE.sub(f'version = "{new}"', content, count=1)
+
+
+def write_dunder_version(content: str, version: tuple[int, int, int]) -> str:
+    """Return __init__.py content with __version__ replaced."""
+    new = f"{version[0]}.{version[1]}.{version[2]}"
+    return _DUNDER_VERSION_RE.sub(f'__version__ = "{new}"', content, count=1)
 
 
 def get_main_version() -> tuple[int, int, int] | None:
@@ -70,9 +79,15 @@ def main() -> int:
     new_ver = bump_minor(current)
     new_content = write_version(content, new_ver)
     PYPROJECT_PATH.write_text(new_content, encoding="utf-8")
+    paths = [str(PYPROJECT_PATH)]
+
+    if INIT_PATH.exists():
+        init_content = INIT_PATH.read_text(encoding="utf-8")
+        INIT_PATH.write_text(write_dunder_version(init_content, new_ver), encoding="utf-8")
+        paths.append(str(INIT_PATH))
 
     try:
-        subprocess.run(["git", "add", str(PYPROJECT_PATH)], check=True)
+        subprocess.run(["git", "add", *paths], check=True)
     except subprocess.CalledProcessError as e:
         print(f"bump-version: ERROR: git add failed: {e}", flush=True)
         return 1
