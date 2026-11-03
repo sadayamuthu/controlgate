@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "controlgate"
-version = "0.2.1"
+version = "0.2.2"
 description = "NIST RMF Cloud Security Hardening — Pre-Commit & Pre-Merge Compliance Gate"
 readme = "README.md"
 license = {text = "MIT"}
+authors = [{ name = "Karthikeyan Sadayamuthu" }]
 requires-python = ">=3.10"
 keywords = ["nist", "security", "compliance", "pre-commit", "cloud", "rmf", "800-53"]
 classifiers = [
@@ -30,6 +31,7 @@ Homepage = "https://github.com/sadayamuthu/controlgate"
 Repository = "https://github.com/sadayamuthu/controlgate"
 Issues = "https://github.com/sadayamuthu/controlgate/issues"
 Documentation = "https://github.com/sadayamuthu/controlgate#readme"
+Changelog = "https://github.com/sadayamuthu/controlgate/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

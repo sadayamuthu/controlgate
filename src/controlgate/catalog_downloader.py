@@ -12,6 +12,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from controlgate import __version__
+
 # Source of truth for the enriched catalog
 CATALOG_REPO = "sadayamuthu/nist-cloud-security-baseline"
 CATALOG_BRANCH = "main"
@@ -59,7 +61,7 @@ def download_catalog(target_dir: Path | None = None) -> Path:
         print(f"📥 Downloading catalog from {CATALOG_URL}...", file=sys.stderr)
         req = urllib.request.Request(
             CATALOG_URL,
-            headers={"User-Agent": "ControlGate/0.1.3"},
+            headers={"User-Agent": f"ControlGate/{__version__}"},
         )
         with urllib.request.urlopen(req, timeout=30) as response:
             data = response.read()
