@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use ControlGate, please cite it using these metadata."
+type: software
+title: "ControlGate: NIST SP 800-53 compliance gate for pre-commit and CI"
+abstract: >-
+  ControlGate is a command-line tool that scans code changes against NIST
+  SP 800-53 Rev. 5 security controls before commit and merge. It parses the
+  staged diff, a pull request diff or a full repository, runs 18 pattern-based
+  security gates (secrets, cryptography, IAM, supply chain, infrastructure as
+  code, input validation, audit, change control, dependencies, API, privacy,
+  resilience, incident response, observability, memory safety, licenses,
+  AI/ML and containers), maps each finding to a NIST control, filters findings
+  by the selected NIST or FedRAMP baseline, and returns a BLOCK, WARN or PASS
+  verdict as JSON, Markdown or SARIF. It runs as a pre-commit hook, in CI and
+  as a GitHub Actions workflow.
+authors:
+  - family-names: Sadayamuthu
+    given-names: Karthikeyan
+    orcid: "https://orcid.org/0009-0008-3539-6048"
+version: 0.2.2
+date-released: "2026-11-03"
+license: MIT
+repository-code: "https://github.com/sadayamuthu/controlgate"
+url: "https://github.com/sadayamuthu/controlgate"
+keywords:
+  - NIST SP 800-53
+  - compliance as code
+  - DevSecOps
+  - pre-commit
+  - CI
+  - static analysis

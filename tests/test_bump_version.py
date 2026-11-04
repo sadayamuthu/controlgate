@@ -10,6 +10,13 @@ PYPROJECT_SAME = '[project]\nname = "controlgate"\nversion = "0.1.7"\n'
 PYPROJECT_HIGHER = '[project]\nname = "controlgate"\nversion = "0.2.0"\n'
 
 
+@pytest.fixture(autouse=True)
+def _isolate_init_path(tmp_path):
+    """Keep main() from rewriting the real src/controlgate/__init__.py."""
+    with patch("bump_version.INIT_PATH", tmp_path / "missing" / "__init__.py"):
+        yield
+
+
 class TestParseVersion:
     def test_parses_version_from_content(self):
         assert bump_version.parse_version(PYPROJECT_SAME) == (0, 1, 7)
@@ -35,6 +42,15 @@ class TestWriteVersion:
         result = bump_version.write_version(PYPROJECT_SAME, (0, 2, 0))
         assert 'version = "0.2.0"' in result
         assert 'version = "0.1.7"' not in result
+
+
+class TestWriteDunderVersion:
+    def test_replaces_dunder_version(self):
+        result = bump_version.write_dunder_version(
+            '"""Doc."""\n\n__version__ = "0.1.7"\n', (0, 2, 0)
+        )
+        assert '__version__ = "0.2.0"' in result
+        assert "0.1.7" not in result
 
 
 class TestGetMainVersion:
@@ -69,6 +85,22 @@ class TestMain:
             exit_code = bump_version.main()
         assert exit_code == 0
         assert 'version = "0.2.0"' in pyproject.read_text()
+
+    def test_bumps_init_version_and_stages_it(self, tmp_path):
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(PYPROJECT_SAME)
+        init = tmp_path / "__init__.py"
+        init.write_text('__version__ = "0.1.7"\n')
+        mock_result = MagicMock(stdout=PYPROJECT_SAME)
+        with (
+            patch("bump_version.PYPROJECT_PATH", pyproject),
+            patch("bump_version.INIT_PATH", init),
+            patch("subprocess.run", return_value=mock_result) as mock_run,
+        ):
+            exit_code = bump_version.main()
+        assert exit_code == 0
+        assert init.read_text() == '__version__ = "0.2.0"\n'
+        assert mock_run.call_args_list[-1][0][0] == ["git", "add", str(pyproject), str(init)]
 
     def test_skips_when_versions_differ(self, tmp_path):
         pyproject = tmp_path / "pyproject.toml"

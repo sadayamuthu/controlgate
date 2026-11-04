@@ -156,6 +156,12 @@ class TestSARIFReporter:
         assert len(run["results"]) == 2
         assert len(run["tool"]["driver"]["rules"]) == 2
 
+    def test_driver_version_is_package_version(self, sample_verdict):
+        from controlgate import __version__
+
+        data = json.loads(SARIFReporter().render(sample_verdict))
+        assert data["runs"][0]["tool"]["driver"]["version"] == __version__
+
     def test_result_severity_mapping(self, sample_verdict):
         reporter = SARIFReporter()
         output = reporter.render(sample_verdict)

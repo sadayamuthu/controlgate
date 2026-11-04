@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from controlgate import __version__
 from controlgate.models import Verdict
 
 _SARIF_SEVERITY_MAP = {
@@ -87,7 +88,7 @@ class SARIFReporter:
                     "tool": {
                         "driver": {
                             "name": "ControlGate",
-                            "version": "0.1.3",
+                            "version": __version__,
                             "informationUri": "https://github.com/sadayamuthu/controlgate",
                             "rules": rules,
                         }

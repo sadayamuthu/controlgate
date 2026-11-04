@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **10 New Security Gates**: Expanded scanning capabilities to a total of 18 gates, including API, Privacy, Resilience, Incident, Observability, MemSafe, License, AI/ML, Container, and Dependency vulnerabilities.
 - **FedRAMP Support**: ControlGate can now evaluate code changes against FedRAMP baselines (LI-SaaS, Low, Moderate, High) via the `--gov` CLI flag or `gov: true` in `.controlgate.yml`. This integrates directly with the enriched `fedramp_membership` catalog data.
 
+## [0.2.2] - 2026-11-03
+
+### Added
+- `LICENSE` file with the MIT license text (the README badge already linked to it).
+- `CONTRIBUTING.md`, `SECURITY.md` and `CITATION.cff`.
+- Weekly grouped Dependabot updates for `pip` and GitHub Actions.
+- `authors` and a `Changelog` URL in the package metadata.
+- A test that `controlgate.__version__` matches the version in `pyproject.toml`.
+
+### Changed
+- README: live CI, PyPI and license badges, Contributing and Security sections, and a link to `LICENSE`.
+
+### Fixed
+- `controlgate.__version__` was stuck at 0.1.3. The catalog download `User-Agent` and the SARIF `driver.version` were too; both now come from `__version__`.
+- The `bump-version` pre-commit hook now updates `__version__` along with `pyproject.toml`.
+- README claims that didn't match the code: the NIST controls and detections listed for several gates, the number of controls the gates map, the catalog counts, what `controlgate init` writes, and the path of the Codex skill.
+
 ## [0.1.3] - 2026-02-20
 
 ### Added
